@@ -3,7 +3,7 @@ import Toybox.Lang;
 import Toybox.System;
 import Toybox.WatchUi;
 
-(:background)
+(:background, :glance)
 class PomodorinoApp extends Application.AppBase {
 
     // onStart/onStop also run for the background process; only the
@@ -28,6 +28,12 @@ class PomodorinoApp extends Application.AppBase {
         var ctrl = getController();
         ctrl.onEnter();
         return [new MainView(ctrl), new MainDelegate(ctrl)];
+    }
+
+    // The quick view in the widget list (Glance.mc).
+    (:glance)
+    function getGlanceView() {
+        return [new PomoGlanceView()];
     }
 
     function getServiceDelegate() {

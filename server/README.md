@@ -83,6 +83,7 @@ install yourself, put the URL in `server/.server-url` and the key in `server/.ap
   For example `Consegna Pcd ~1h30`: the watch shows *Consegna Pcd* with a 1h 30' estimate.
 - **Time spent**: every session adds a comment to the task, like `🍅 2 · 50 min`. Todoist has no field
   for time spent, so the server keeps the running total in KV.
+- **Order**: most urgent first (P1, P2, ...), then Todoist's own order. The watch's glance shows the first one.
 - **Complete**: closes the task. A recurring task moves to its next date instead.
 
 ## Layout

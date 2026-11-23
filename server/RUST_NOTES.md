@@ -158,6 +158,19 @@ let tasks = page.results
 - `constant_time_eq` uses `zip` + `fold` to combine all bytes without stopping early, so timing
   doesn't reveal how many characters of the key were right.
 
+Sorting (`todoist.rs`):
+
+```rust
+page.results.sort_by_key(|t| Reverse(t.priority));
+```
+
+- `sort_by_key` sorts in place by whatever the closure returns. `std::cmp::Reverse` is a tiny wrapper
+  whose ordering is the opposite of what it wraps, so this sorts by priority, highest first, without
+  writing a comparison function.
+- Rust's `sort` family is *stable*: items with equal keys keep their order. That's why tasks with the
+  same priority stay in Todoist's order (`sort_unstable_by_key` is a bit faster but doesn't promise it).
+- Sorting needs `mut page`: the `let` binding has to be declared mutable to change what it owns.
+
 ## 9. Closures (`api.rs`, `todoist.rs`)
 
 ```rust

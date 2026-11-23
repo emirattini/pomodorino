@@ -1,11 +1,13 @@
 //! Todoist adapter, REST API v1 (https://developer.todoist.com/api/v1/).
 //!
-//! - List:     GET  /tasks/filter?query=<filter>   -> { results: [task], next_cursor }
+//! - List:     GET  /tasks/filter?query=<filter>   -> { results: [task], next_cursor },
+//!   most urgent first (API priority 4 = "P1" in the app), otherwise in Todoist's order
 //! - Estimate: the task's `duration` field (Pro plan), when its unit is "minute"; otherwise a tag
 //!   like `~50m` in the title or description (see `estimate.rs`)
 //! - Log time: POST /comments { task_id, content }  (Todoist has no time tracking: total kept in KV)
 //! - Complete: POST /tasks/{id}/close               -> 204
 
+use std::cmp::Reverse;
 use std::collections::HashMap;
 
 use serde::Deserialize;
@@ -39,6 +41,9 @@ struct TodoistTask {
     #[serde(default)]
     description: String,
     project_id: String,
+    /// 1 (normal) to 4 (urgent). The app shows it the other way round: 4 is "P1".
+    #[serde(default)]
+    priority: u8,
     duration: Option<Duration>,
 }
 
@@ -144,7 +149,9 @@ impl TaskProvider for Todoist {
             &[("query", self.filter.as_str()), ("limit", "50")],
         )
         .map_err(|e| ProviderError::Decode(e.to_string()))?;
-        let page: Page<TodoistTask> = self.get_json(url.as_str()).await?;
+        let mut page: Page<TodoistTask> = self.get_json(url.as_str()).await?;
+        // Most urgent first. The sort is stable: equal priorities keep Todoist's order.
+        page.results.sort_by_key(|t| Reverse(t.priority));
 
         // Missing project names are not worth failing the whole list for.
         let projects = self.project_names().await.unwrap_or_default();
@@ -203,6 +210,20 @@ impl TaskProvider for Todoist {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sorts_most_urgent_first_and_keeps_order_otherwise() {
+        let json = r#"{"results":[
+            {"id":"a","content":"A","project_id":"p","priority":1},
+            {"id":"b","content":"B","project_id":"p","priority":4},
+            {"id":"c","content":"C","project_id":"p","priority":1},
+            {"id":"d","content":"D","project_id":"p","priority":3}
+        ]}"#;
+        let mut page: Page<TodoistTask> = serde_json::from_str(json).unwrap();
+        page.results.sort_by_key(|t| Reverse(t.priority));
+        let ids: Vec<&str> = page.results.iter().map(|t| t.id.as_str()).collect();
+        assert_eq!(ids, ["b", "d", "a", "c"]);
+    }
 
     #[test]
     fn reads_todoist_task_json() {

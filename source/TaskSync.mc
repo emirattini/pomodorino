@@ -71,8 +71,9 @@ module TaskSync {
         return null;
     }
 
+    // "day" (today's midnight) lets the glance tell today's list from an old one.
     function saveTasks(tasks as Array) as Void {
-        Application.Storage.setValue(KEY_CACHE, { "tasks" => tasks });
+        Application.Storage.setValue(KEY_CACHE, { "tasks" => tasks, "day" => Time.today().value() });
     }
 
     // Drops the tasks this watch has completed but whose "complete" hasn't reached the server yet.
@@ -96,10 +97,11 @@ module TaskSync {
 
     // Keeps the cached list in step with what we just did, so it's right even offline.
     function updateCachedTask(id as String, addMin as Number, remove as Boolean) as Void {
-        var tasks = cachedTasks();
-        if (tasks == null) {
+        var cache = Application.Storage.getValue(KEY_CACHE);
+        if (!(cache instanceof Dictionary) || !(cache["tasks"] instanceof Array)) {
             return;
         }
+        var tasks = cache["tasks"] as Array;
         for (var i = 0; i < tasks.size(); i++) {
             var t = tasks[i] as Dictionary;
             if (id.equals(t["id"])) {
@@ -109,7 +111,7 @@ module TaskSync {
                     var spent = t["spentMin"];
                     t["spentMin"] = (spent instanceof Number ? spent : 0) + addMin;
                 }
-                saveTasks(tasks);
+                Application.Storage.setValue(KEY_CACHE, cache); // keeps the list's own "day"
                 return;
             }
         }

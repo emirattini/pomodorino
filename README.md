@@ -9,6 +9,7 @@ A Pomodoro watch app for the Garmin Forerunner 165 (and 165 Music), built with C
 - **Daily goal**: an outer gold ring fills as you complete pomodoros. You also get a streak of consecutive goal days and a 7-day bar chart.
 - **Auto-start (optional)**: the next session starts by itself. It stops after a long break so a forgotten timer doesn't run all night.
 - **5 screen styles**: Ember, Drain, Mono, Liquid, Classic. Pick one in Settings → Style, which shows a live preview of each.
+- **Glance**: in the watch's widget list, Pomodorino shows the running session (phase, end time, task) or, with task mode, the most urgent task of the day.
 - **On-watch settings**: style, focus, short break, long break, long break interval, daily goal, auto-start.
 - **Tasks (optional)**: work on today's tasks from Todoist. Pick a task when the app opens and see its title on
   the timer. When you finish, you get *estimated vs actual* time, can complete the task, and the focus time is
@@ -70,6 +71,7 @@ source/Menus.mc               main & settings menus
 source/NumberPicker.mc        number picker for settings
 source/CreditsView.mc         credits for the icon photo and fonts
 source/TaskSync.mc            server requests, offline queue of finished sessions, task list cache
+source/Glance.mc              the glance in the widget list (runs in 64 KB, reads Storage only)
 source/TaskViews.mc           task list, loading screen, estimated-vs-actual summary
 resources/settings/           phone settings (task mode, server URL, API key)
 server/                       Rust proxy for task managers (Cloudflare Workers), see server/README.md
