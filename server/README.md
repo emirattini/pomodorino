@@ -39,8 +39,8 @@ npx wrangler dev                           # http://localhost:8787, KV is simula
 curl -H 'X-Api-Key: dev-key' localhost:8787/v1/tasks
 ```
 
-With the default `PROVIDER = "demo"` you get four example tasks. To try Todoist locally, add
-`TODOIST_TOKEN=...` to `.dev.vars` and run `npx wrangler dev --var PROVIDER:todoist`.
+`wrangler.toml` uses `PROVIDER = "todoist"`, so locally you also need `TODOIST_TOKEN=...` in `.dev.vars`.
+For the four example tasks instead, run `npx wrangler dev --var PROVIDER:demo`.
 
 Checks:
 
