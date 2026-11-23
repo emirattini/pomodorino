@@ -41,7 +41,7 @@ class LiquidStyle extends Style {
         Draw.arcLabel(dc, _arc, cx, cy, rText, Draw.todayText(f), f.today >= f.goal ? Theme.GOAL : Theme.shade(Theme.GOAL, 0.8), false);
 
         Draw.text(dc, cx, cy, _timer, Theme.formatTime(f.rem), f.running || f.phase == PomoEngine.IDLE ? Graphics.COLOR_WHITE : 0xBBBBBB);
-        Draw.statusLine(dc, cx, cy + (52 * s).toNumber(), _small, Theme.status(f), 0xDDDDDD, f);
+        Draw.statusLine(dc, cx, cy + (52 * s).toNumber(), cx - (61 * s).toNumber(), _small, Theme.status(f), 0xDDDDDD, f);
     }
 
     // Liquid surface at height `frac` inside a circle of radius r, as one polygon.

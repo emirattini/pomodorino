@@ -61,7 +61,7 @@ class ClassicStyle extends Style {
         }
         Draw.text(dc, cx, cy + (62 * s).toNumber(), _small, stats, Theme.shade(CREAM, 0.7));
         var status = f.running ? "until " + Theme.clockText(f.end) : (f.paused ? "" : "press start");
-        Draw.statusLine(dc, cx, cy + (88 * s).toNumber(), _small, status, Theme.shade(CREAM, 0.45), f);
+        Draw.statusLine(dc, cx, cy + (88 * s).toNumber(), cx - (55 * s).toNumber(), _small, status, Theme.shade(CREAM, 0.45), f);
     }
 
     // The daily goal as tomatoes along the bottom edge.

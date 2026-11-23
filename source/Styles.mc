@@ -162,18 +162,80 @@ module Draw {
     }
 
     // The status line, replaced by the task's title while a task session runs (unless paused).
-    // The title uses the system font: the styles' own fonts only have the letters their labels need.
-    function statusLine(dc as Dc, cx as Number, y as Number, font, status as String, color as Number, f as Frame) as Void {
+    // The title uses the system font (the styles' own fonts only have the letters their labels need)
+    // and wraps onto a second line below `y` when it's too long for one. `r` is the radius of the free
+    // area inside the style's rings, which limits the width of each line.
+    // Returns the extra height used below the line: 0, or one title line.
+    function statusLine(dc as Dc, cx as Number, y as Number, r as Number, font, status as String, color as Number, f as Frame) as Number {
         var title = f.task;
         if (title == null || f.paused) {
             text(dc, cx, y, font, status, color);
-            return;
+            return 0;
         }
-        // Width of the screen's inner circle (radius ~68% of the half-width) at this height.
-        var r = cx * 0.68;
+        var lh = (dc.getFontHeight(Graphics.FONT_XTINY) * 0.85).toNumber();
+        var lines = wrap(dc, title, chord(dc, y, r), chord(dc, y + lh, r));
+        text(dc, cx, y, Graphics.FONT_XTINY, lines[0], 0xCCCCCC);
+        if (lines.size() < 2) {
+            return 0;
+        }
+        text(dc, cx, y + lh, Graphics.FONT_XTINY, lines[1], 0xCCCCCC);
+        return lh;
+    }
+
+    // Width of a circle of radius r around the screen centre, at height y, minus a margin.
+    function chord(dc as Dc, y as Number, r as Number) as Number {
         var dy = (y - dc.getHeight() / 2).abs();
-        var w = dy < r ? (2 * Math.sqrt(r * r - dy * dy)).toNumber() - 10 : cx;
-        text(dc, cx, y, Graphics.FONT_XTINY, fit(dc, Graphics.FONT_XTINY, title, w), 0xCCCCCC);
+        return dy < r ? (2 * Math.sqrt(r * r - dy * dy)).toNumber() - 12 : 0;
+    }
+
+    var _wrapIn as String? = null;
+    var _wrapW1 as Number = 0;
+    var _wrapW2 as Number = 0;
+    var _wrapOut as Array<String> = [] as Array<String>;
+
+    // Splits `s` into at most two lines in FONT_XTINY, `w1` and `w2` pixels wide, breaking at a space.
+    // If it fits, the lines are balanced (the break that keeps both furthest from their limit). If it
+    // doesn't, the first line takes as many whole words as fit and only the second ends with "…".
+    // Remembers the last answer, since onUpdate runs every second.
+    function wrap(dc as Dc, s as String, w1 as Number, w2 as Number) as Array<String> {
+        if (s.equals(_wrapIn) && w1 == _wrapW1 && w2 == _wrapW2) {
+            return _wrapOut;
+        }
+        var font = Graphics.FONT_XTINY;
+        var out = [s] as Array<String>;
+        if (dc.getTextWidthInPixels(s, font) > w1) {
+            var chars = s.toCharArray();
+            var greedy = 0;     // last break whose first line fits
+            var balanced = 0;   // best break where both lines fit
+            var best = 0.0;
+            for (var i = 1; i < chars.size() - 1; i++) {
+                if (chars[i] != ' ') {
+                    continue;
+                }
+                var a = dc.getTextWidthInPixels(s.substring(0, i) as String, font) / w1.toFloat();
+                if (a > 1.0) {
+                    break;
+                }
+                greedy = i;
+                var b = dc.getTextWidthInPixels(s.substring(i + 1, s.length()) as String, font) / w2.toFloat();
+                var worst = a > b ? a : b;
+                if (b <= 1.0 && (balanced == 0 || worst < best)) {
+                    balanced = i;
+                    best = worst;
+                }
+            }
+            var cut = balanced > 0 ? balanced : greedy;
+            if (cut == 0) {
+                out = [fit(dc, font, s, w1)] as Array<String>; // the first word alone is too long
+            } else {
+                out = [s.substring(0, cut) as String, fit(dc, font, s.substring(cut + 1, s.length()) as String, w2)] as Array<String>;
+            }
+        }
+        _wrapIn = s;
+        _wrapW1 = w1;
+        _wrapW2 = w2;
+        _wrapOut = out;
+        return out;
     }
 
     var _fitIn as String? = null;

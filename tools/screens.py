@@ -2,8 +2,9 @@
 """Store screenshots of the main screen in each style, rendered from a Python port of the styles'
 drawing code (source/styles/*.mc) with the app's own bitmap fonts (resources/fonts/).
 
-Usage: screens.py OUT_DIR    -> OUT_DIR/screen_<n>_<name>.png (390x390, Forerunner 165 size):
-                                one per style, plus the statistics screen
+Usage: screens.py OUT_DIR [TASK_TITLE]
+    -> OUT_DIR/screen_<n>_<name>.png (390x390, Forerunner 165 size): one per style, plus the
+       statistics screen. With TASK_TITLE, the styles show it as the task being worked on.
 
 This is not the simulator: two kinds of text use stand-ins. The watch's system fonts (FONT_XTINY,
 FONT_SMALL: Roboto) and the curved labels (vector RobotoCondensedBold) are drawn with Noto Sans, which is close.
@@ -65,6 +66,9 @@ class SystemFont:
 
     def height(self):
         return self.line_h
+
+    def width(self, s):
+        return self.f.getlength(s) / SS
 
 
 FONT_XTINY = SystemFont(f"{NOTO}/NotoSans-Regular.ttf", 22, 30)      # FR165: Roboto, 30 px line
@@ -180,6 +184,7 @@ class Frame:
         self.today, self.goal, self.streak = 5, 8, 3
         self.cycle, self.every, self.tick = 1, 4, 0
         self.clock = "14:25"
+        self.task = None
         self.__dict__.update(kw)
         total = self.minutes * 60
         self.rem = int(round(total * (1 - self.frac)))
@@ -245,6 +250,50 @@ def text(dc, x, y, font, s, color):
     dc.drawText(x, y, font, s)
 
 
+def chord(y, r):
+    dy = abs(y - W / 2)
+    return int(2 * math.sqrt(r * r - dy * dy)) - 12 if dy < r else 0
+
+
+def fit(font, s, max_w):
+    if font.width(s) <= max_w:
+        return s
+    n = len(s) - 1
+    while n > 1 and font.width(s[:n] + "…") > max_w:
+        n -= 1
+    return s[:n] + "…"
+
+
+def wrap(s, w1, w2):
+    """Draw.wrap: balanced lines if the title fits on two, else whole words on line 1 and "…" on line 2."""
+    font = FONT_XTINY
+    if font.width(s) <= w1:
+        return [s]
+    fits1 = [i for i in range(1, len(s) - 1) if s[i] == " " and font.width(s[:i]) <= w1]
+    if not fits1:
+        return [fit(font, s, w1)]
+    both = [i for i in fits1 if font.width(s[i + 1:]) <= w2]
+    if both:
+        cut = min(both, key=lambda i: max(font.width(s[:i]) / w1, font.width(s[i + 1:]) / w2))
+    else:
+        cut = max(fits1)
+    return [s[:cut], fit(font, s[cut + 1:], w2)]
+
+
+def status_line(dc, cx, y, r, font, st, color, f):
+    """Draw.statusLine: the task title (one or two lines) replaces the status. Returns the extra height."""
+    if f.task is None or f.paused:
+        text(dc, cx, y, font, st, color)
+        return 0
+    lh = int(FONT_XTINY.height() * 0.85)
+    lines = wrap(f.task, chord(y, r), chord(y + lh, r))
+    text(dc, cx, y, FONT_XTINY, lines[0], 0xCCCCCC)
+    if len(lines) < 2:
+        return 0
+    text(dc, cx, y + lh, FONT_XTINY, lines[1], 0xCCCCCC)
+    return lh
+
+
 def today_text(f):
     s = f"{f.today} / {f.goal} TODAY"
     if f.streak > 0:
@@ -306,7 +355,7 @@ def ember(dc, f):
         else:
             dc.setColor(shade(DIM, 0.6)); dc.setPenWidth(2); dc.drawCircle(x, y, rr)
     text(dc, cx, cy, timer, fmt(f.rem), WHITE if f.running or f.phase == IDLE else DIM)
-    text(dc, cx, cy + 50, FONT_XTINY, status(f), f.color if f.paused else DIM)
+    status_line(dc, cx, cy + 50, cx - 71, FONT_XTINY, status(f), f.color if f.paused else DIM, f)
 
 
 def drain(dc, f):
@@ -336,7 +385,7 @@ def drain(dc, f):
     text(dc, cx, cy - 58, label, phase_name(f.phase), col)
     text(dc, cx, cy + 4, timer, fmt(f.rem), WHITE if f.running or f.phase == IDLE else DIM)
     text(dc, cx, cy + 60, label, f"{f.today} / {f.goal} TODAY", GOAL)
-    text(dc, cx, cy + 90, label, status(f), col if f.paused else DIM)
+    status_line(dc, cx, cy + 90, cx - 65, label, status(f), col if f.paused else DIM, f)
 
 
 def mono(dc, f):
@@ -362,11 +411,11 @@ def mono(dc, f):
     text(dc, cx, cy - 60, label, "// " + phase_name(f.phase).lower() + cursor, col)
     text(dc, cx, cy, timer, fmt(f.rem), WHITE if f.running or f.phase == IDLE else DIM)
     st = "ends " + f.clock if f.running else ("paused" if f.paused else "press start")
-    text(dc, cx, cy + 44, label, st, DIM)
+    below = status_line(dc, cx, cy + 44, cx - 50, label, st, DIM, f)
     big = f.goal > 10
     sq, pitch = (7, 10) if big else (10, 16)
     per_row = 15 if big else f.goal
-    y0 = cy + 70
+    y0 = cy + 70 + below
     for i in range(f.goal):
         row = i // per_row
         in_row = f.goal - row * per_row if row == (f.goal - 1) // per_row else per_row
@@ -412,7 +461,7 @@ def liquid(dc, f):
     arc_label(dc, cx, cy, rt, spaced(phase_name(f.phase)), col, True)
     arc_label(dc, cx, cy, rt, today_text(f), GOAL if f.today >= f.goal else shade(GOAL, 0.8), False)
     text(dc, cx, cy, timer, fmt(f.rem), WHITE if f.running or f.phase == IDLE else 0xBBBBBB)
-    text(dc, cx, cy + 52, small, status(f), 0xDDDDDD)
+    status_line(dc, cx, cy + 52, cx - 61, small, status(f), 0xDDDDDD, f)
 
 
 def classic(dc, f):
@@ -454,7 +503,7 @@ def classic(dc, f):
         stats += f"  ·  {f.streak} day streak"
     text(dc, cx, cy + 62, small, stats, shade(CREAM, 0.7))
     st = "until " + f.clock if f.running else ("" if f.paused else "press start")
-    text(dc, cx, cy + 88, small, st, shade(CREAM, 0.45))
+    status_line(dc, cx, cy + 88, cx - 55, small, st, shade(CREAM, 0.45), f)
 
 
 def stats(dc, f):
@@ -504,6 +553,10 @@ SHOTS = [
     ("classic", classic, Frame(frac=0.62, tick=1)),
     ("stats", stats, Frame(days=WEEK)),
 ]
+
+if len(sys.argv) > 2:
+    for _, _, fr in SHOTS:
+        fr.task = sys.argv[2]
 
 os.makedirs(OUT, exist_ok=True)
 for n, (name, fn, f) in enumerate(SHOTS, 1):

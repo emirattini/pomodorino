@@ -54,7 +54,7 @@ class TaskLoadView extends WatchUi.View {
         var tasks = null;
         var title = "Today";
         if (code == 200 && data instanceof Dictionary && data["tasks"] instanceof Array) {
-            tasks = data["tasks"] as Array;
+            tasks = TaskSync.withoutQueuedCompletes(data["tasks"] as Array);
             TaskSync.saveTasks(tasks);
             TaskSync.flush(); // the phone is reachable: send what's waiting
         } else {
@@ -207,8 +207,14 @@ class TaskSummaryView extends WatchUi.View {
         var before = t["spent"] instanceof Number ? t["spent"] as Number : 0;
         var actual = before + session;
 
-        Draw.text(dc, cx, (h * 0.17).toNumber(), Graphics.FONT_XTINY,
-            Draw.fit(dc, Graphics.FONT_XTINY, t["title"] as String, (w * 0.62).toNumber()), Graphics.COLOR_WHITE);
+        // Title on one or two lines, centred on the same spot.
+        var tw = (w * 0.60).toNumber();
+        var lines = Draw.wrap(dc, t["title"] as String, tw, tw);
+        var lh = (dc.getFontHeight(Graphics.FONT_XTINY) * 0.85).toNumber();
+        var ty = (h * 0.17).toNumber() - (lines.size() - 1) * lh / 2;
+        for (var i = 0; i < lines.size(); i++) {
+            Draw.text(dc, cx, ty + i * lh, Graphics.FONT_XTINY, lines[i], Graphics.COLOR_WHITE);
+        }
 
         var labelY = (h * 0.29).toNumber();
         var valueY = (h * 0.39).toNumber();

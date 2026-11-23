@@ -75,6 +75,25 @@ module TaskSync {
         Application.Storage.setValue(KEY_CACHE, { "tasks" => tasks });
     }
 
+    // Drops the tasks this watch has completed but whose "complete" hasn't reached the server yet.
+    // Without this, a list fetched right after Complete task (while the request is still on its way)
+    // would bring the task back.
+    function withoutQueuedCompletes(tasks as Array) as Array {
+        var q = queue();
+        for (var i = 0; i < q.size(); i++) {
+            var item = q[i] as Dictionary;
+            if (!"c".equals(item["k"])) {
+                continue;
+            }
+            for (var j = tasks.size() - 1; j >= 0; j--) {
+                if ((item["id"] as String).equals((tasks[j] as Dictionary)["id"])) {
+                    tasks.remove(tasks[j]);
+                }
+            }
+        }
+        return tasks;
+    }
+
     // Keeps the cached list in step with what we just did, so it's right even offline.
     function updateCachedTask(id as String, addMin as Number, remove as Boolean) as Void {
         var tasks = cachedTasks();

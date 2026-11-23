@@ -55,6 +55,6 @@ class DrainStyle extends Style {
         Draw.text(dc, cx, cy + (4 * s).toNumber(), _timer, Theme.formatTime(f.rem),
             f.running || f.phase == PomoEngine.IDLE ? Graphics.COLOR_WHITE : Theme.DIM);
         Draw.text(dc, cx, cy + (60 * s).toNumber(), _label, f.today.toString() + " / " + f.goal + " TODAY", Theme.GOAL);
-        Draw.statusLine(dc, cx, cy + (90 * s).toNumber(), _label, Theme.status(f), f.paused ? col : Theme.DIM, f);
+        Draw.statusLine(dc, cx, cy + (90 * s).toNumber(), cx - (65 * s).toNumber(), _label, Theme.status(f), f.paused ? col : Theme.DIM, f);
     }
 }

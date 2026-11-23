@@ -45,14 +45,14 @@ class MonoStyle extends Style {
         Draw.text(dc, cx, cy - (60 * s).toNumber(), _label, "// " + Theme.phaseName(f.phase).toLower() + cursor, col);
         Draw.text(dc, cx, cy, _timer, Theme.formatTime(f.rem), f.running || f.phase == PomoEngine.IDLE ? Graphics.COLOR_WHITE : Theme.DIM);
         var status = f.running ? "ends " + Theme.clockText(f.end) : (f.paused ? "paused" : "press start");
-        Draw.statusLine(dc, cx, cy + (44 * s).toNumber(), _label, status, Theme.DIM, f);
+        var below = Draw.statusLine(dc, cx, cy + (44 * s).toNumber(), cx - (50 * s).toNumber(), _label, status, Theme.DIM, f);
 
         // Daily goal as squares (two rows of 15 for big goals).
         var big = f.goal > 10;
         var sq = ((big ? 7 : 10) * s).toNumber();
         var pitch = ((big ? 10 : 16) * s).toNumber();
         var perRow = big ? 15 : f.goal;
-        var y0 = cy + (70 * s).toNumber();
+        var y0 = cy + (70 * s).toNumber() + below; // a two-line task title pushes the squares down
         for (var i = 0; i < f.goal; i++) {
             var row = i / perRow;
             var inRow = (row == (f.goal - 1) / perRow) ? f.goal - row * perRow : perRow;

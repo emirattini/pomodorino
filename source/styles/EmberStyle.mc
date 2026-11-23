@@ -31,7 +31,7 @@ class EmberStyle extends Style {
         drawPips(dc, cx, cy - (50 * s).toNumber(), s, f);
         Draw.text(dc, cx, cy, _timer, Theme.formatTime(f.rem),
             f.running || f.phase == PomoEngine.IDLE ? Graphics.COLOR_WHITE : Theme.DIM);
-        Draw.statusLine(dc, cx, cy + (50 * s).toNumber(), Graphics.FONT_XTINY, Theme.status(f), f.paused ? f.color : Theme.DIM, f);
+        Draw.statusLine(dc, cx, cy + (50 * s).toNumber(), cx - (71 * s).toNumber(), Graphics.FONT_XTINY, Theme.status(f), f.paused ? f.color : Theme.DIM, f);
     }
 
     private function drawSession(dc as Dc, cx as Number, cy as Number, r as Number, pen as Number, f as Frame) as Void {
