@@ -2,12 +2,13 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// Credits for the icon photo (CC BY-SA 3.0 asks for attribution) and the bundled fonts (SIL OFL 1.1
+// Author, then credits for the icon photo (CC BY-SA 3.0 asks for attribution) and the bundled fonts (SIL OFL 1.1
 // asks for the copyright notices). Pages flip with UP/DOWN or a swipe; BACK closes.
 class CreditsView extends WatchUi.View {
 
     // First line of each page is its heading; a leading "*" marks a name (drawn brighter).
     const PAGES = [
+        ["POMODORINO", "*Made by emileroutin", "", "github.com/emirattini/", "pomodorino", "MIT License"],
         ["ICON", "*Photo: Luc Viatour /", "https://Lucnix.be", "CC BY-SA 3.0", "Background removed,", "resized"],
         ["FONTS · SIL OFL 1.1", "*Bebas Neue", "© 2010 Dharma Type", "*JetBrains Mono", "© 2020 The JetBrains", "Mono Project Authors"],
         ["FONTS · SIL OFL 1.1", "*Outfit", "© 2021 The Outfit", "Project Authors", "*Playfair Display", "© 2017 The Playfair", "Display Project Authors"],

@@ -1,7 +1,8 @@
 //! Todoist adapter, REST API v1 (https://developer.todoist.com/api/v1/).
 //!
 //! - List:     GET  /tasks/filter?query=<filter>   -> { results: [task], next_cursor }
-//! - Estimate: the task's `duration` field, when its unit is "minute"
+//! - Estimate: the task's `duration` field (Pro plan), when its unit is "minute"; otherwise a tag
+//!   like `~50m` in the title or description (see `estimate.rs`)
 //! - Log time: POST /comments { task_id, content }  (Todoist has no time tracking: total kept in KV)
 //! - Complete: POST /tasks/{id}/close               -> 204
 
@@ -14,6 +15,7 @@ use worker::{Fetch, Headers, Method, Request, RequestInit, Response, Url};
 
 use super::TaskProvider;
 use crate::error::ProviderError;
+use crate::estimate;
 use crate::model::{MAX_TASKS, Session, Task};
 
 const BASE: &str = "https://api.todoist.com/api/v1";
@@ -34,6 +36,8 @@ struct Page<T> {
 struct TodoistTask {
     id: String,
     content: String,
+    #[serde(default)]
+    description: String,
     project_id: String,
     duration: Option<Duration>,
 }
@@ -150,11 +154,17 @@ impl TaskProvider for Todoist {
             .into_iter()
             .take(MAX_TASKS)
             .map(|t| Task {
-                estimate_min: t.duration.as_ref().and_then(Duration::minutes),
+                // Pro's duration field first, then a `~50m` tag in the title, then in the description.
+                estimate_min: t
+                    .duration
+                    .as_ref()
+                    .and_then(Duration::minutes)
+                    .or_else(|| estimate::find(&t.content))
+                    .or_else(|| estimate::find(&t.description)),
+                title: estimate::strip(&t.content),
                 project: projects.get(&t.project_id).cloned(),
                 spent_min: None,
                 id: t.id,
-                title: t.content,
             })
             .collect();
         Ok(tasks)

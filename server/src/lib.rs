@@ -3,6 +3,7 @@
 
 mod api;
 mod error;
+mod estimate;
 mod model;
 mod providers;
 mod store;

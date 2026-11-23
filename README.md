@@ -82,6 +82,7 @@ docs/store/                   Connect IQ Store listing text and images
 
 ## Credits
 
+- **Made by** emileroutin. Source: [github.com/emirattini/pomodorino](https://github.com/emirattini/pomodorino).
 - **Launcher icon:** photo by Luc Viatour / https://Lucnix.be, from
   [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Tomates_cerises_Luc_Viatour.jpg),
   licensed [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).

@@ -78,7 +78,9 @@ install yourself, put the URL in `server/.server-url` and the key in `server/.ap
 
 ## Todoist specifics
 
-- **Estimate**: the task's *duration* (Todoist → task → Duration), when it's set in minutes.
+- **Estimate**: the task's *duration* (Todoist → task → Duration, Pro plan only), when it's set in minutes.
+  On the free plan, write a tag in the title or description instead: `~50`, `~50m`, `~1h`, `~1h30`.
+  For example `Consegna Pcd ~1h30`: the watch shows *Consegna Pcd* with a 1h 30' estimate.
 - **Time spent**: every session adds a comment to the task, like `🍅 2 · 50 min`. Todoist has no field
   for time spent, so the server keeps the running total in KV.
 - **Complete**: closes the task. A recurring task moves to its next date instead.

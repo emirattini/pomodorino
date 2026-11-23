@@ -257,7 +257,36 @@ let mut out = ...;     // `mut` must be explicit to change a variable
 Variables are immutable unless marked `mut`, so the places where state changes stand out.
 Shadowing reuses a name for a transformed value without needing `mut`.
 
-## 15. Tests next to the code
+## 15. Parsing text without regexes, and overflow-safe arithmetic (`estimate.rs`)
+
+```rust
+fn tag_minutes(word: &str) -> Option<u32> {
+    let value = word.strip_prefix('~')?;
+    let value = value.strip_suffix('m').unwrap_or(value);
+    let minutes = match value.split_once('h') {
+        None => value.parse::<u32>().ok()?,
+        Some((hours, "")) => hours.parse::<u32>().ok()?.checked_mul(60)?,
+        Some((hours, mins)) => hours.parse::<u32>().ok()?.checked_mul(60)?.checked_add(mins.parse().ok()?)?,
+    };
+    (1..=MAX_MIN).contains(&minutes).then_some(minutes)
+}
+```
+
+- `?` also works on `Option`: in a function returning `Option`, `x?` means "if `None`, return `None`".
+  So every step that might not match (no `~`, not a number) simply ends the function.
+- `strip_prefix`, `strip_suffix` and `split_once` return borrowed slices of the original `&str`. No new
+  strings are allocated while parsing.
+- `match` on a tuple can test a *value* inside it: `Some((hours, ""))` only matches `"1h"`, with nothing
+  after the `h`.
+- `checked_mul` / `checked_add` return `None` on overflow instead of wrapping around or panicking.
+  `~99999999999h` is just "not a tag" (there's a test for it).
+- `(1..=MAX_MIN).contains(&x)` reads better than `x >= 1 && x <= MAX_MIN`, and `cond.then_some(v)` turns a
+  `bool` into `Some(v)` or `None`.
+- `find_map` (in `find`) stops at the first word for which the closure returns `Some`. In
+  `todoist.rs`, `.or_else(|| ...)` chains the three places an estimate can come from: the first one
+  that's `Some` wins, and the later closures don't even run.
+
+## 16. Tests next to the code
 
 ```rust
 #[cfg(test)]
