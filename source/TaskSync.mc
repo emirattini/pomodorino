@@ -18,14 +18,22 @@ module TaskSync {
 
     // ---- configuration (Garmin Connect app settings) ----
 
+    // A phone setting, or the personal value compiled in by build.sh (gen/Personal.mc) when it's empty.
     function prop(key as String) as String {
         var v = Application.Properties.getValue(key);
-        return (v instanceof String) ? v : "";
+        if (v instanceof String && !v.equals("")) {
+            return v;
+        }
+        if (key.equals("serverUrl")) {
+            return Personal.SERVER_URL;
+        }
+        return key.equals("apiKey") ? Personal.API_KEY : "";
     }
 
+    // On when switched on in the phone settings, or when a personal build has a server compiled in.
     function enabled() as Boolean {
-        return Application.Properties.getValue("tasksEnabled") == true
-            && !prop("serverUrl").equals("") && !prop("apiKey").equals("");
+        var on = Application.Properties.getValue("tasksEnabled") == true || !Personal.SERVER_URL.equals("");
+        return on && !prop("serverUrl").equals("") && !prop("apiKey").equals("");
     }
 
     function baseUrl() as String {
