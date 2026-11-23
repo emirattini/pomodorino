@@ -1,114 +1,124 @@
 import Toybox.Application;
 import Toybox.Graphics;
 import Toybox.Lang;
-import Toybox.System;
 import Toybox.Time;
-import Toybox.Time.Gregorian;
 import Toybox.WatchUi;
 
-// The app's glance (the quick view in the widget list).
-// - A session running or paused: its phase and end time, and the task being worked on.
-// - Otherwise: the most important task of the day (the server sorts by priority).
-// Glances can't make web requests, so the task comes from the list saved the last time the app
-// loaded it. A list from an earlier day isn't shown. This code runs in the glance's small memory
-// (64 KB), so it only reads Storage and doesn't use the app's other modules.
+// The app's glance (the quick view in the widget list), laid out like Garmin's own:
+//   Pomodorino              title, in italics while a focus session runs
+//   ━━━━━━━━━──────────     progress of the current session: red focus, green break, blue long break
+//   Consegna Pcd            the task being worked on, or the most urgent task of the day
+// Glances can't make web requests, so the next task comes from the list saved the last time the app
+// loaded it; a list from an earlier day isn't shown. This runs in the glance's small memory (64 KB),
+// so it only reads Storage and doesn't use the app's other modules.
 (:glance)
 class PomoGlanceView extends WatchUi.GlanceView {
 
-    const FOCUS_COLOR = 0xFF5544;
-    const SHORT_COLOR = 0x44DD88;
-    const LONG_COLOR = 0x44AAFF;
-    const GOAL_COLOR = 0xFFB000;
-    const DIM_COLOR = 0x8A8A8A;
+    const IDLE = 0;
+    const FOCUS = 1;
+    const SHORT_BREAK = 2;
+    const LONG_BREAK = 3;
 
     function initialize() {
         GlanceView.initialize();
     }
 
     function onUpdate(dc as Dc) as Void {
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        var font = (Graphics has :FONT_GLANCE) ? Graphics.FONT_GLANCE : Graphics.FONT_XTINY;
         var w = dc.getWidth();
         var h = dc.getHeight();
-        var c = content();
-        line(dc, (h * 0.18).toNumber(), font, c[0] as String, c[1] as Number, w);
-        line(dc, (h * 0.50).toNumber(), font, c[2] as String, Graphics.COLOR_WHITE, w);
-        line(dc, (h * 0.82).toNumber(), font, c[3] as String, DIM_COLOR, w);
-    }
-
-    // [header, header color, main line, detail line]
-    private function content() as Array {
         var now = Time.now().value();
         var st = Application.Storage.getValue("state");
-        var task = Application.Storage.getValue("task");
-        var header = "POMODORINO";
-        var color = GOAL_COLOR;
 
-        if (st instanceof Dictionary) {
-            var ph = st["ph"];
+        // Where the session is: phase, progress 0..1, and whether it's counting down.
+        var ph = IDLE;
+        var frac = 0.0;
+        var running = false;
+        if (st instanceof Dictionary && st["ph"] instanceof Number && st["ph"] != IDLE) {
+            var dur = duration(st["ph"] as Number);
             if (st["run"] == true && st["end"] instanceof Number && now < (st["end"] as Number)) {
-                header = phaseName(ph) + " · until " + clock(st["end"] as Number);
-                color = ph == 2 ? SHORT_COLOR : (ph == 3 ? LONG_COLOR : FOCUS_COLOR);
-            } else if (st["run"] == false && st["rdy"] == false && ph != 0) {
-                header = phaseName(ph) + " · paused";
+                ph = st["ph"] as Number;
+                running = true;
+                frac = 1.0 - ((st["end"] as Number) - now) / dur.toFloat();
+            } else if (st["run"] == false && st["rdy"] == false && st["rem"] instanceof Number) {
+                ph = st["ph"] as Number; // paused
+                frac = 1.0 - (st["rem"] as Number) / dur.toFloat();
             }
         }
+        frac = frac < 0.0 ? 0.0 : (frac > 1.0 ? 1.0 : frac);
 
+        title(dc, (h * 0.20).toNumber(), ph == FOCUS && running);
+        bar(dc, (h * 0.50).toNumber(), w, h, ph, frac, running);
+
+        var task = taskLine();
+        line(dc, (h * 0.80).toNumber(), task[0] as String, (task[1] as Boolean) ? Graphics.COLOR_WHITE : 0x8A8A8A, w);
+    }
+
+    // "Pomodorino" in the glance font, or Roboto Italic while focusing (a vector font: the built-in
+    // fonts have no italics). Both are drawn as vector Roboto when possible, so the size doesn't jump.
+    private function title(dc as Dc, y as Number, italic as Boolean) as Void {
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        if ((Graphics has :getVectorFont) && (dc has :drawAngledText)) {
+            var size = (dc.getFontHeight(Graphics.FONT_GLANCE) * 0.78).toNumber();
+            var font = Graphics.getVectorFont({ :face => italic ? "RobotoItalic" : "RobotoRegular", :size => size });
+            if (font != null) {
+                dc.drawAngledText(0, y, font, "Pomodorino", Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER, 0);
+                return;
+            }
+        }
+        dc.drawText(0, y, Graphics.FONT_GLANCE, "Pomodorino", Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // A rounded track with the elapsed part filled in the phase's color (dimmed while paused).
+    private function bar(dc as Dc, y as Number, w as Number, h as Number, ph as Number, frac as Float, running as Boolean) as Void {
+        var bh = (h * 0.11).toNumber();
+        bh = bh < 6 ? 6 : bh;
+        var top = y - bh / 2;
+        dc.setColor(0x333333, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(0, top, w, bh, bh / 2);
+        if (ph == IDLE || frac <= 0.0) {
+            return;
+        }
+        var color = ph == SHORT_BREAK ? 0x44DD88 : (ph == LONG_BREAK ? 0x44AAFF : 0xFF5544);
+        if (!running) {
+            color = ((color >> 1) & 0x7F7F7F); // paused: half brightness
+        }
+        var fw = (w * frac).toNumber();
+        fw = fw < bh ? bh : fw;
+        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.fillRoundedRectangle(0, top, fw, bh, bh / 2);
+    }
+
+    // [text, is a task (white) rather than a hint (grey)]
+    private function taskLine() as Array {
+        var task = Application.Storage.getValue("task");
         if (task instanceof Dictionary && task["title"] instanceof String) {
-            return [header, color, task["title"], "Working on this"];
+            return [task["title"], true];
         }
-        var top = topTask();
-        if (top != null) {
-            var detail = "Next task";
-            if (top["estimateMin"] instanceof Number) {
-                detail += " · est " + minutes(top["estimateMin"] as Number);
-            }
-            if (top["spentMin"] instanceof Number && (top["spentMin"] as Number) > 0) {
-                detail += " · " + minutes(top["spentMin"] as Number) + " done";
-            }
-            return [header, color, top["title"], detail];
-        }
-        if (Application.Storage.getValue("taskCache") != null) {
-            return [header, color, "No tasks loaded today", "Open to see today's tasks"];
-        }
-        return [header, color, "Ready to focus", "Press to start"];
-    }
-
-    // The first task of today's saved list, or null (no list, an old list, or nothing left today).
-    private function topTask() as Dictionary? {
         var cache = Application.Storage.getValue("taskCache");
-        if (!(cache instanceof Dictionary) || cache["day"] != Time.today().value()) {
-            return null;
+        if (cache instanceof Dictionary) {
+            var tasks = cache["tasks"];
+            if (cache["day"] != Time.today().value()) {
+                return ["Open to load today's tasks", false];
+            }
+            if (tasks instanceof Array && tasks.size() > 0 && (tasks[0] as Dictionary)["title"] instanceof String) {
+                return [(tasks[0] as Dictionary)["title"], true];
+            }
+            return ["No tasks left today", false];
         }
-        var tasks = cache["tasks"];
-        if (!(tasks instanceof Array) || tasks.size() == 0) {
-            return null;
-        }
-        return tasks[0] as Dictionary;
+        return ["Ready to focus", false];
     }
 
-    private function phaseName(ph) as String {
-        if (ph == 2) {
-            return "SHORT BREAK";
-        }
-        return ph == 3 ? "LONG BREAK" : "FOCUS";
+    // Session length in seconds, from the app's settings (defaults 25 / 5 / 15 minutes).
+    private function duration(ph as Number) as Number {
+        var s = Application.Storage.getValue("settings");
+        var key = ph == SHORT_BREAK ? "short" : (ph == LONG_BREAK ? "long" : "focus");
+        var min = (s instanceof Dictionary && s[key] instanceof Number) ? s[key] as Number : (ph == SHORT_BREAK ? 5 : (ph == LONG_BREAK ? 15 : 25));
+        return min * 60;
     }
 
-    private function clock(epoch as Number) as String {
-        var info = Gregorian.info(new Time.Moment(epoch), Time.FORMAT_SHORT);
-        var hour = info.hour as Number;
-        if (!System.getDeviceSettings().is24Hour) {
-            hour = hour % 12 == 0 ? 12 : hour % 12;
-        }
-        return hour + ":" + (info.min as Number).format("%02d");
-    }
-
-    private function minutes(m as Number) as String {
-        return m >= 60 ? (m / 60) + "h " + (m % 60).format("%02d") + "'" : m + "'";
-    }
-
-    // Left-aligned text, shortened with "…" to the glance width.
-    private function line(dc as Dc, y as Number, font, s as String, color as Number, w as Number) as Void {
+    // Left-aligned text in the glance font, shortened with "…" to the glance width.
+    private function line(dc as Dc, y as Number, s as String, color as Number, w as Number) as Void {
+        var font = Graphics.FONT_GLANCE;
         if (dc.getTextWidthInPixels(s, font) > w) {
             var n = s.length() - 1;
             while (n > 1 && dc.getTextWidthInPixels(s.substring(0, n) + "…", font) > w) {
