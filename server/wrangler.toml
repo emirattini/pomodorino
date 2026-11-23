@@ -7,7 +7,7 @@ command = "cargo install -q worker-build && worker-build --release"
 
 [vars]
 # "demo" serves fixed example tasks (no account needed); "todoist" uses the TODOIST_TOKEN secret.
-PROVIDER = "demo"
+PROVIDER = "todoist"
 # Todoist filter for the watch's task list, see https://todoist.com/help/articles/introduction-to-filters
 TODOIST_FILTER = "today"
 
@@ -15,7 +15,7 @@ TODOIST_FILTER = "today"
 # `wrangler dev` simulates KV locally, so the placeholder is enough for local testing.
 [[kv_namespaces]]
 binding = "POMODORINO_KV"
-id = "replace-with-your-namespace-id"
+id = "2800540dea3a4f80a0428269fbcebf1d"
 
 # Secrets (never in this file):
 #   npx wrangler secret put API_KEY        the key you type into the watch settings
