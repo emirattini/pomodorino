@@ -1,0 +1,22 @@
+[package]
+name = "pomodorino-server"
+version = "0.1.0"
+edition = "2024"
+description = "Proxy between the Pomodorino watch app and task managers (Todoist, ...)"
+publish = false
+
+[lib]
+# cdylib: the WebAssembly module that Workers loads. rlib: lets `cargo test` link the crate natively.
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+worker = "0.9"
+
+# The free Workers plan allows a 3 MB (compressed) script: optimise for size.
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1

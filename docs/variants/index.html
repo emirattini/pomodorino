@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Pomodorino design variants</title>
+<style>
+  body { background:#111; color:#ddd; font-family:system-ui,sans-serif; margin:2rem; }
+  h1 { font-weight:600; } .intro { color:#999; max-width:60rem; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:2rem; margin-top:2rem; }
+  figure { margin:0; background:#1b1b1b; border-radius:16px; padding:1rem; }
+  img { display:block; margin:0 auto; border-radius:50%; }
+  h2 { margin:.8rem 0 .2rem; font-size:1.2rem; color:#fff; }
+  p { margin:.3rem 0; line-height:1.4; } .font { color:#ffb000; } .note { color:#888; font-size:.9rem; }
+</style></head><body>
+<h1>Pomodorino: pick a design</h1>
+<p class="intro">Each loop is one whole session, sped up. On the watch the ring moves once per second.
+Example data: focus session, 5 of 8 pomodoros today, 3-day streak. Curved labels use a stand-in for the watch's
+built-in Roboto Condensed. Timer fonts are the real ones, embedded as bitmap fonts. Mix and match is possible,
+e.g. the Dial ring with the Bebas font.</p>
+<div class="grid">
+  <figure>
+    <img src="v1_ember.gif" width="300" height="300" alt="Ember variant">
+    <figcaption><h2>1 · Ember</h2>
+      <p class="font">Noto Sans Condensed Light</p><p>Gradient arc with a glowing tip that breathes; goal ring split into one segment per pomodoro; curved labels.</p><p class="note">Current design. Works as-is at 1 update/sec.</p></figcaption>
+  </figure>
+
+  <figure>
+    <img src="v2_orbit.gif" width="300" height="300" alt="Orbit variant">
+    <figcaption><h2>2 · Orbit</h2>
+      <p class="font">Orbitron Medium + Michroma</p><p>Hairline track with a comet head and fading tail; goal as glowing dots; magenta and cyan.</p><p class="note">1 update/sec is fine; the flicker needs faster redraws while the screen is on.</p></figcaption>
+  </figure>
+
+  <figure>
+    <img src="v3_dial.gif" width="300" height="300" alt="Dial variant">
+    <figcaption><h2>3 · Dial</h2>
+      <p class="font">Rajdhani SemiBold</p><p>60 stopwatch ticks light up one by one; the newest tick flashes; thin segmented goal ring.</p><p class="note">Works at 1 update/sec (one tick ≈ 25 s for a 25-min focus).</p></figcaption>
+  </figure>
+
+  <figure>
+    <img src="v4_drain.gif" width="300" height="300" alt="Drain variant">
+    <figcaption><h2>4 · Drain</h2>
+      <p class="font">Bebas Neue</p><p>Thick ring that drains away as time runs out; continuous goal arc with a knob; bold condensed type.</p><p class="note">Works at 1 update/sec.</p></figcaption>
+  </figure>
+
+  <figure>
+    <img src="v5_mono.gif" width="300" height="300" alt="Mono variant">
+    <figcaption><h2>5 · Mono</h2>
+      <p class="font">JetBrains Mono Light</p><p>Minimal hairline ring with a donut knob; goal as squares; blinking terminal cursor.</p><p class="note">Works at 1 update/sec (the cursor blinks once per second).</p></figcaption>
+  </figure>
+
+  <figure>
+    <img src="v6_liquid.gif" width="300" height="300" alt="Liquid variant">
+    <figcaption><h2>6 · Liquid</h2>
+      <p class="font">Outfit ExtraLight</p><p>The dial fills up like a glass with two rippling waves; segmented goal ring; curved labels.</p><p class="note">The level rises at 1 update/sec; smooth ripples need faster redraws (more battery).</p></figcaption>
+  </figure>
+
+  <figure>
+    <img src="v7_sport.gif" width="300" height="300" alt="Sport variant">
+    <figcaption><h2>7 · Sport</h2>
+      <p class="font">Oxanium SemiBold</p><p>270° segmented gauge, like a speedometer; inner goal gauge; count shown in the bottom gap.</p><p class="note">Works at 1 update/sec; the leading block blinks.</p></figcaption>
+  </figure>
+
+  <figure>
+    <img src="v8_classic.gif" width="300" height="300" alt="Classic variant">
+    <figcaption><h2>8 · Classic</h2>
+      <p class="font">Playfair Display</p><p>Serif numerals; one dot per minute around the dial; little tomatoes for the daily goal; warm cream palette.</p><p class="note">Works at 1 update/sec (one dot per minute).</p></figcaption>
+  </figure>
+</div></body></html>

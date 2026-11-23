@@ -1,0 +1,12 @@
+<!-- Edited in the Garmin Connect phone app: Pomodorino > Settings. See docs/tasks-spec.md. -->
+<settings>
+    <setting propertyKey="@Properties.tasksEnabled" title="@Strings.TasksEnabledTitle">
+        <settingConfig type="boolean"/>
+    </setting>
+    <setting propertyKey="@Properties.serverUrl" title="@Strings.ServerUrlTitle" prompt="@Strings.ServerUrlPrompt">
+        <settingConfig type="alphaNumeric"/>
+    </setting>
+    <setting propertyKey="@Properties.apiKey" title="@Strings.ApiKeyTitle">
+        <settingConfig type="alphaNumeric"/>
+    </setting>
+</settings>

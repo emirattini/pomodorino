@@ -1,0 +1,9 @@
+bin/
+*.pem
+*.der
+__pycache__/
+*.pyc
+.claude/settings.local.json
+# third-party photos, all rights reserved: never publish
+docs/icons/real/
+docs/icons/photo2/

@@ -1,0 +1,5 @@
+<properties>
+    <property id="tasksEnabled" type="boolean">false</property>
+    <property id="serverUrl" type="string"></property>
+    <property id="apiKey" type="string"></property>
+</properties>

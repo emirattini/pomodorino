@@ -1,0 +1,23 @@
+name = "pomodorino"
+main = "build/worker/shim.mjs"
+compatibility_date = "2026-11-01"
+
+[build]
+command = "cargo install -q worker-build && worker-build --release"
+
+[vars]
+# "demo" serves fixed example tasks (no account needed); "todoist" uses the TODOIST_TOKEN secret.
+PROVIDER = "demo"
+# Todoist filter for the watch's task list, see https://todoist.com/help/articles/introduction-to-filters
+TODOIST_FILTER = "today"
+
+# Create the namespace with `npx wrangler kv namespace create POMODORINO_KV` and paste its id here.
+# `wrangler dev` simulates KV locally, so the placeholder is enough for local testing.
+[[kv_namespaces]]
+binding = "POMODORINO_KV"
+id = "replace-with-your-namespace-id"
+
+# Secrets (never in this file):
+#   npx wrangler secret put API_KEY        the key you type into the watch settings
+#   npx wrangler secret put TODOIST_TOKEN  Todoist > Settings > Integrations > Developer
+# For `wrangler dev`, put them in .dev.vars instead (KEY=value, one per line).
