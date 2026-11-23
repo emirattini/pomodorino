@@ -92,3 +92,8 @@ docs/store/                   Connect IQ Store listing text and images
   (Reserved Font Name "Playfair Display"); Noto Sans © 2022 The Noto Project Authors.
   The app bundles bitmap versions of these fonts under the names Timer*/Label*/Small*.
 
+
+## License
+
+The code is under the [MIT License](LICENSE). Photos, the icon and the fonts keep their own licenses,
+listed in Credits above and in `docs/icons/photo/credits.json`.
