@@ -5,7 +5,7 @@ import Toybox.Time;
 import Toybox.WatchUi;
 
 // The app's glance (the quick view in the widget list), laid out like Garmin's own:
-//   Pomodorino              title, in italics while a focus session runs
+//   Pomodorino              title
 //   ━━━━━━━━━──────────     progress of the current session: red focus, green break, blue long break
 //   Consegna Pcd            the task being worked on, or the most urgent task of the day
 // Glances can't make web requests, so the next task comes from the list saved the last time the app
@@ -46,20 +46,19 @@ class PomoGlanceView extends WatchUi.GlanceView {
         }
         frac = frac < 0.0 ? 0.0 : (frac > 1.0 ? 1.0 : frac);
 
-        title(dc, (h * 0.20).toNumber(), ph == FOCUS && running);
+        title(dc, (h * 0.20).toNumber());
         bar(dc, (h * 0.50).toNumber(), w, h, ph, frac, running);
 
         var task = taskLine();
         line(dc, (h * 0.80).toNumber(), task[0] as String, (task[1] as Boolean) ? Graphics.COLOR_WHITE : 0x8A8A8A, w);
     }
 
-    // "Pomodorino" in the glance font, or Roboto Italic while focusing (a vector font: the built-in
-    // fonts have no italics). Both are drawn as vector Roboto when possible, so the size doesn't jump.
-    private function title(dc as Dc, y as Number, italic as Boolean) as Void {
+    // "Pomodorino", larger than the glance font: drawn as vector Roboto when the watch has it.
+    private function title(dc as Dc, y as Number) as Void {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         if ((Graphics has :getVectorFont) && (dc has :drawAngledText)) {
-            var size = (dc.getFontHeight(Graphics.FONT_GLANCE) * 0.78).toNumber();
-            var font = Graphics.getVectorFont({ :face => italic ? "RobotoItalic" : "RobotoRegular", :size => size });
+            var size = dc.getFontHeight(Graphics.FONT_GLANCE);
+            var font = Graphics.getVectorFont({ :face => "RobotoRegular", :size => size });
             if (font != null) {
                 dc.drawAngledText(0, y, font, "Pomodorino", Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER, 0);
                 return;
