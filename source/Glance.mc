@@ -7,7 +7,8 @@ import Toybox.WatchUi;
 // The app's glance (the quick view in the widget list), laid out like Garmin's own:
 //   Pomodorino              title
 //   ━━━━━━━━━──────────     progress of the current session: red focus, green break, blue long break
-//   Consegna Pcd            the task being worked on, or the most urgent task of the day
+//   Consegna Pcd   20/50'   the task being worked on, or the most urgent task of the day, with the
+//                           minutes done on it out of its estimate
 // Glances can't make web requests, so the next task comes from the list saved the last time the app
 // loaded it; a list from an earlier day isn't shown. This runs in the glance's small memory (64 KB),
 // so it only reads Storage and doesn't use the app's other modules.
@@ -33,15 +34,26 @@ class PomoGlanceView extends WatchUi.GlanceView {
         var ph = IDLE;
         var frac = 0.0;
         var running = false;
+        var focusSec = 0; // seconds of the focus session in progress, not yet in the task's "foc"
         if (st instanceof Dictionary && st["ph"] instanceof Number && st["ph"] != IDLE) {
             var dur = duration(st["ph"] as Number);
-            if (st["run"] == true && st["end"] instanceof Number && now < (st["end"] as Number)) {
-                ph = st["ph"] as Number;
-                running = true;
-                frac = 1.0 - ((st["end"] as Number) - now) / dur.toFloat();
+            var elapsed = 0; // seconds into the current session
+            if (st["run"] == true && st["end"] instanceof Number) {
+                var left = (st["end"] as Number) - now;
+                // A session that ended while the app was closed counts in full, but the bar shows idle.
+                elapsed = dur - (left > 0 ? left : 0);
+                if (left > 0) {
+                    ph = st["ph"] as Number;
+                    running = true;
+                    frac = elapsed / dur.toFloat();
+                }
             } else if (st["run"] == false && st["rdy"] == false && st["rem"] instanceof Number) {
                 ph = st["ph"] as Number; // paused
-                frac = 1.0 - (st["rem"] as Number) / dur.toFloat();
+                elapsed = dur - (st["rem"] as Number);
+                frac = elapsed / dur.toFloat();
+            }
+            if (st["ph"] == FOCUS) {
+                focusSec = elapsed;
             }
         }
         frac = frac < 0.0 ? 0.0 : (frac > 1.0 ? 1.0 : frac);
@@ -49,8 +61,8 @@ class PomoGlanceView extends WatchUi.GlanceView {
         title(dc, (h * 0.20).toNumber());
         bar(dc, (h * 0.50).toNumber(), w, h, ph, frac, running);
 
-        var task = taskLine();
-        line(dc, (h * 0.80).toNumber(), task[0] as String, (task[1] as Boolean) ? Graphics.COLOR_WHITE : 0x8A8A8A, w);
+        var task = taskLine(focusSec);
+        taskRow(dc, (h * 0.80).toNumber(), w, task);
     }
 
     // "Pomodorino", larger than the glance font: drawn as vector Roboto when the watch has it.
@@ -87,24 +99,31 @@ class PomoGlanceView extends WatchUi.GlanceView {
         dc.fillRoundedRectangle(0, top, fw, bh, bh / 2);
     }
 
-    // [text, is a task (white) rather than a hint (grey)]
-    private function taskLine() as Array {
+    // [text, is a task (white) rather than a hint (grey), minutes done or null, estimate or null]
+    private function taskLine(focusSec as Number) as Array {
         var task = Application.Storage.getValue("task");
         if (task instanceof Dictionary && task["title"] instanceof String) {
-            return [task["title"], true];
+            // Logged before this session + this session's finished pomodoros + the one in progress,
+            // counted like the app does (a cut-short pomodoro over 30 s counts as one minute).
+            var sec = (task["foc"] instanceof Number ? task["foc"] as Number : 0) + focusSec;
+            var min = sec / 60;
+            min = (min == 0 && sec > 30) ? 1 : min;
+            var before = task["spent"] instanceof Number ? task["spent"] as Number : 0;
+            return [task["title"], true, before + min, task["est"]];
         }
         var cache = Application.Storage.getValue("taskCache");
         if (cache instanceof Dictionary) {
             var tasks = cache["tasks"];
             if (cache["day"] != Time.today().value()) {
-                return ["Open to load today's tasks", false];
+                return ["Open to load today's tasks", false, null, null];
             }
             if (tasks instanceof Array && tasks.size() > 0 && (tasks[0] as Dictionary)["title"] instanceof String) {
-                return [(tasks[0] as Dictionary)["title"], true];
+                var top = tasks[0] as Dictionary;
+                return [top["title"], true, top["spentMin"], top["estimateMin"]];
             }
-            return ["No tasks left today", false];
+            return ["No tasks left today", false, null, null];
         }
-        return ["Ready to focus", false];
+        return ["Ready to focus", false, null, null];
     }
 
     // Session length in seconds, from the app's settings (defaults 25 / 5 / 15 minutes).
@@ -115,17 +134,28 @@ class PomoGlanceView extends WatchUi.GlanceView {
         return min * 60;
     }
 
-    // Left-aligned text in the glance font, shortened with "…" to the glance width.
-    private function line(dc as Dc, y as Number, s as String, color as Number, w as Number) as Void {
+    // The task title on the left and "done/estimate'" on the right (red once over the estimate).
+    // Without an estimate just the minutes done, if any; hints have no counter.
+    private function taskRow(dc as Dc, y as Number, w as Number, task as Array) as Void {
         var font = Graphics.FONT_GLANCE;
-        if (dc.getTextWidthInPixels(s, font) > w) {
+        var done = task[2] instanceof Number ? task[2] as Number : 0;
+        var est = task[3] instanceof Number ? task[3] as Number : 0;
+        var counter = est > 0 ? done + "/" + est + "'" : (done > 0 ? done + "'" : "");
+        var room = w;
+        if (!counter.equals("")) {
+            dc.setColor(est > 0 && done > est ? 0xFF5544 : 0xAAAAAA, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(w, y, font, counter, Graphics.TEXT_JUSTIFY_RIGHT | Graphics.TEXT_JUSTIFY_VCENTER);
+            room = w - dc.getTextWidthInPixels(counter, font) - 12;
+        }
+        var s = task[0] as String;
+        if (dc.getTextWidthInPixels(s, font) > room) {
             var n = s.length() - 1;
-            while (n > 1 && dc.getTextWidthInPixels(s.substring(0, n) + "…", font) > w) {
+            while (n > 1 && dc.getTextWidthInPixels(s.substring(0, n) + "…", font) > room) {
                 n--;
             }
             s = s.substring(0, n) + "…";
         }
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
+        dc.setColor((task[1] as Boolean) ? Graphics.COLOR_WHITE : 0x8A8A8A, Graphics.COLOR_TRANSPARENT);
         dc.drawText(0, y, font, s, Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 }
