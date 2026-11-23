@@ -72,6 +72,10 @@ In the Garmin Connect phone app: Devices → Forerunner 165 → Activities & App
 
 The next time Pomodorino opens, it shows today's tasks.
 
+Garmin Connect only shows these settings for apps installed from the Connect IQ store. For a build you
+install yourself, put the URL in `server/.server-url` and the key in `server/.api-key` (both git-ignored):
+`./build.sh` compiles them in and turns task mode on. `./build.sh release` never includes them.
+
 ## Todoist specifics
 
 - **Estimate**: the task's *duration* (Todoist → task → Duration), when it's set in minutes.

@@ -28,7 +28,8 @@ In number pickers and the style picker: UP/DOWN to change, START to save, BACK t
 On the task summary: UP/DOWN to choose *Complete task* or *Continue later*, START to confirm, BACK to go back to the timer.
 
 Task mode is turned on from the phone: Garmin Connect → your watch → Activities & Apps → Pomodorino → Settings
-(*Work on tasks*, *Server URL*, *API key*). See [server/README.md](server/README.md).
+(*Work on tasks*, *Server URL*, *API key*). Builds you install yourself get them compiled in instead,
+see [server/README.md](server/README.md).
 
 ## Setup (Manjaro / Arch)
 
