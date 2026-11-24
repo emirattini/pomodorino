@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pomodorino Todoist connection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* VOICE work: a technical sequence diagram for the developer and anyone reviewing the login
+   IDEA the app's own dark watch screen and tomato red, as on the connect pages the phone shows
+   PICTURE one sequence diagram, four lifelines, every request in order; red arrows carry a secret
+   COLOUR near-black / white ground, plain ink, tomato red only for secrets and the headline figure
+   TYPE Roboto (the watch's face) + Roboto Mono for endpoints
+   LAYOUT title and one-line finding, then the full-width diagram, then who-keeps-what and the checks side by side */
+:root{color-scheme:light dark;--bg:light-dark(#ffffff,#0b0b0c);--ink:light-dark(#16181b,#ececec);--mute:light-dark(#5b6168,#9aa0a6);--line:light-dark(#d5d8dc,#2c2f33);--band:light-dark(#f3f4f5,#151619);--red:light-dark(#cf3424,#ff5b47);--box:light-dark(#fbfbfc,#18191c)}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 Roboto,system-ui,-apple-system,sans-serif;overflow-x:clip}
+.band{padding-block:clamp(24px,4vw,52px);padding-left:max(5vw,16px);padding-right:max(5vw,16px)}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-size:clamp(30px,4.4vw,46px);line-height:1.05;letter-spacing:-.02em;margin:0 0 14px;font-weight:700;text-wrap:balance;max-width:22ch}
+.lead{max-width:68ch;margin:0;color:var(--mute);font-size:17px}
+.lead b{color:var(--ink);font-weight:500}
+.key{display:flex;flex-wrap:wrap;gap:8px 22px;margin:18px 0 0;font-size:14px;color:var(--mute)}
+.key span{display:inline-flex;align-items:center;gap:8px}
+.sw{width:28px;height:0;border-top:2px solid var(--ink)}
+.sw.k{border-color:var(--red)}
+.sw.r{border-top-style:dashed}
+figure{margin:0}
+.scroll{overflow-x:auto;border-block:1px solid var(--line)}
+#seq{display:block;width:100%;min-width:900px;height:auto}
+figcaption{font-size:14px;color:var(--mute);margin-top:10px;max-width:80ch}
+.ll{stroke:var(--line);stroke-width:1.5;stroke-dasharray:4 5}
+.hd{fill:var(--box);stroke:var(--line)}
+.hn{fill:var(--ink);font:700 15px Roboto,sans-serif}
+.hs{fill:var(--mute);font:400 12.5px Roboto,sans-serif}
+.ph{fill:var(--band)}
+.pt{fill:var(--ink);font:700 14px Roboto,sans-serif}
+.ar{stroke:var(--ink);stroke-width:1.6;fill:none}
+.ar.k{stroke:var(--red)}
+.ar.r{stroke-dasharray:6 4}
+.ar.o{opacity:.55}
+.lb{fill:var(--ink);font:500 12.5px "Roboto Mono",ui-monospace,monospace;paint-order:stroke;stroke:var(--bg);stroke-width:5px}
+.lb.k{fill:var(--red)}
+.dt{fill:var(--mute);font:400 12.5px Roboto,sans-serif;paint-order:stroke;stroke:var(--bg);stroke-width:5px}
+.nb{fill:var(--box);stroke:var(--line)}
+.nt{fill:var(--ink);font:400 12.5px Roboto,sans-serif}
+.mk{fill:var(--ink)}
+.mk.k{fill:var(--red)}
+.cols{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(24px,4vw,56px);align-items:start}
+h2{font-size:22px;line-height:1.2;margin:0 0 12px;letter-spacing:-.01em}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px 9px 0;border-bottom:1px solid var(--line)}
+th{font-weight:500;color:var(--mute);font-size:13px}
+td:first-child{font-weight:500;white-space:nowrap}
+code{font:14px "Roboto Mono",ui-monospace,monospace;overflow-wrap:anywhere}
+.red{color:var(--red)}
+ul{margin:0;padding-left:20px}
+li{margin:0 0 10px}
+li b{font-weight:500}
+.note{font-size:14px;color:var(--mute);margin-top:18px}
+@media(max-width:760px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){table{font-size:14px}.stack thead{display:none}.stack tr{display:grid;padding-block:8px;border-bottom:1px solid var(--line)}.stack td{border:0;padding:2px 0;white-space:normal}}
+</style>
+</head>
+<body>
+
+<header class="band">
+  <div class="wrap">
+    <h1>The watch holds one key. Only the server talks to Todoist.</h1>
+    <p class="lead">How <b>Connect Todoist</b> links a watch to someone's Todoist account, and what happens on every request afterwards and on <b>Disconnect</b>. The watch never sees a Todoist password or token, and the server never sees the password.</p>
+    <div class="key">
+      <span><i class="sw"></i>request</span>
+      <span><i class="sw r"></i>response</span>
+      <span><i class="sw k"></i>carries a secret (key, code, client secret or token)</span>
+    </div>
+  </div>
+</header>
+
+<section class="wrap">
+  <figure>
+    <div class="scroll"><svg id="seq" role="img" aria-label="Sequence diagram: the watch asks the server for a pairing code, the phone logs in to Todoist, the server exchanges the code for tokens and links the watch, which then uses its own key for every request."></svg></div>
+    <figcaption style="padding-inline:max(5vw,16px)">Five stages, top to bottom. Stages 2 and 3 overlap in time: the watch keeps polling while the person logs in on the phone. Paths are as in <code>server/src/lib.rs</code>.</figcaption>
+  </figure>
+</section>
+
+<section class="band">
+  <div class="wrap cols">
+    <div>
+      <h2>Who keeps what</h2>
+      <table class="stack">
+        <thead><tr><th>Where</th><th>What</th><th>For how long</th></tr></thead>
+        <tbody>
+          <tr><td>Watch</td><td>the device key (32 random bytes), in the app's Storage</td><td>until Disconnect</td></tr>
+          <tr><td>Phone browser</td><td>a <code>pomodorino_state</code> cookie, sent only to <code>/oauth</code>, unreadable by scripts</td><td>15 minutes</td></tr>
+          <tr><td>Server (D1)</td><td>SHA-256 of the device key; the Todoist account id; access and refresh token; session ids and minutes per task</td><td>until Disconnect of the last watch</td></tr>
+          <tr><td>Server (D1)</td><td>a pending watch: key hash, pairing code, state</td><td>15 minutes, then deleted</td></tr>
+          <tr><td>Cloudflare secrets</td><td>Todoist client secret; the owner's API key and personal token</td><td>set with <code>wrangler secret put</code></td></tr>
+          <tr><td>Todoist</td><td>the password and the login itself</td><td>never leaves Todoist</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h2>The checks along the way</h2>
+      <ul>
+        <li><b>The code expires.</b> A pairing code works for 15 minutes; after that the page says “This link has expired” and the watch shows “The code expired”.</li>
+        <li><b>The login is bound to one browser.</b> <code>state</code> must match the cookie set by <code>/connect/start</code>. A callback link opened in another browser gets “Start again from the watch”, so a leaked or forwarded callback can't link a watch to the wrong Todoist account.</li>
+        <li><b>People check the code.</b> A forwarded <em>connect</em> link would link the sender's watch to whoever logs in, as with any TV-style pairing. The page shows the code and says to continue only if it's on your own watch.</li>
+        <li><b>A stolen database isn't a key.</b> The server stores only the hash of each device key and compares in constant time.</li>
+        <li><b>Refresh tokens are used once.</b> Todoist replaces the refresh token on every refresh and revokes access if an old one is reused. D1 is strongly consistent, and the new tokens are saved only if no other request refreshed first.</li>
+        <li><b>Revoked access is visible.</b> If Todoist refuses the refresh, the API answers <code>401 reconnect</code> and the watch says “Connect Todoist again”.</li>
+        <li><b>Disconnect cleans up.</b> The last watch of an account revokes the token at Todoist and deletes the user, sessions and minutes.</li>
+      </ul>
+      <p class="note">Owner shortcut: a request whose <code>X-Api-Key</code> equals the <code>API_KEY</code> secret skips D1 and uses the personal <code>TODOIST_TOKEN</code>. That's how the developer's own builds work.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+{
+const W = 1000, PAD = 10;
+const lanes = [
+  { x: 100, n: 'Watch', s: 'Pomodorino app' },
+  { x: 360, n: 'Phone', s: 'Garmin Connect, browser' },
+  { x: 640, n: 'Pomodorino server', s: 'Cloudflare Worker + D1' },
+  { x: 900, n: 'Todoist', s: 'login and API' }
+];
+const w = 0, p = 1, s = 2, t = 3;
+// ph: stage title · m: [from, to], c: request, d: detail, r: response, k: carries a secret, o: only sometimes · n: note on a lane
+const rows = [
+  { ph: '1  Start pairing (Menu → Connect Todoist)' },
+  { m: [w, s], c: 'POST /v1/pair' },
+  { n: s, l: ['new device key + 8-character code (K7F2QM9X)', 'stores SHA-256(key) and the code, for 15 min'] },
+  { m: [s, w], r: 1, k: 1, c: '{ code, deviceKey, connectUrl }' },
+  { m: [w, p], c: 'openWebPage(connectUrl)', d: 'Garmin Connect shows a notification' },
+  { m: [p, s], c: 'GET /connect?code=K7F2QM9X' },
+  { m: [s, p], r: 1, c: 'page: the code + “Connect with Todoist”' },
+  { ph: '2  Log in to Todoist (on the phone)' },
+  { m: [p, s], c: 'GET /connect/start?code=…', d: 'the button' },
+  { n: s, l: ['state = random nonce, stored in D1 on the', 'pending watch\'s row (not on the watch itself)'] },
+  { m: [s, p], r: 1, k: 1, c: '302 → Todoist', d: 'Set-Cookie: state (HttpOnly, Secure, 15 min)' },
+  { m: [p, t], c: 'GET /oauth/authorize', d: 'client_id, scope=data:read_write, state' },
+  { n: t, l: ['log in, tap “Allow”', 'the password stays here'] },
+  { m: [t, p], r: 1, k: 1, c: '302 → /oauth/callback', d: 'code, state' },
+  { m: [p, s], k: 1, c: 'GET /oauth/callback?code&state', d: 'with the state cookie' },
+  { n: s, l: ['cookie = state? otherwise “Start again from the watch”', 'finds the pending watch by state'] },
+  { m: [s, t], k: 1, c: 'POST /oauth/access_token', d: 'code + client_id + client secret' },
+  { m: [t, s], r: 1, k: 1, c: 'access token + refresh token', d: 'the access token lasts 1 hour' },
+  { m: [s, t], c: 'GET /api/v1/user' },
+  { m: [t, s], r: 1, c: 'account id' },
+  { n: s, l: ['saves the user (same account = same user)', 'links the watch; erases code and state'] },
+  { m: [s, p], r: 1, c: 'page: “Connected”' },
+  { ph: '3  The watch picks it up (polling since stage 1)' },
+  { m: [w, s], k: 1, c: 'GET /v1/pair/status', d: 'X-Api-Key: device key, every 3 s' },
+  { m: [s, w], r: 1, c: '{ linked: true }', d: 'or { linked: false }, or 404 after 15 min' },
+  { n: w, l: ['keeps the device key', 'opens today\'s tasks'] },
+  { ph: '4  Every request afterwards' },
+  { m: [w, s], k: 1, c: 'GET /v1/tasks', d: 'X-Api-Key: device key (also sessions, complete)' },
+  { n: s, l: ['SHA-256(key) → watch → user', 'token expires in under 5 minutes? then refresh:'] },
+  { m: [s, t], k: 1, o: 1, c: 'POST /oauth/access_token', d: 'grant_type=refresh_token + client secret' },
+  { m: [t, s], r: 1, k: 1, o: 1, c: 'new access + refresh token', d: 'the old refresh token stops working' },
+  { n: s, l: ['saved only if no other request refreshed first'] },
+  { m: [s, t], k: 1, c: 'GET /api/v1/tasks', d: 'Authorization: Bearer access token' },
+  { m: [t, s], r: 1, c: 'tasks' },
+  { m: [s, w], r: 1, c: 'today\'s tasks, most urgent first' },
+  { ph: '5  Disconnect (Menu → Disconnect Todoist)' },
+  { m: [w, s], k: 1, c: 'DELETE /v1/device', d: 'X-Api-Key: device key' },
+  { n: s, l: ['forgets the watch; if it was the account\'s last:'] },
+  { m: [s, t], k: 1, c: 'DELETE /api/v1/access_tokens', d: 'revokes the token' },
+  { n: s, l: ['deletes the user, sessions and minutes'] },
+  { m: [s, w], r: 1, c: '{ ok: true }' }
+];
+
+const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const text = (x, y, cls, v, anchor) => `<text x="${x}" y="${y}" class="${cls}" text-anchor="${anchor || 'middle'}">${esc(v)}</text>`;
+const out = [];
+let y = 84;
+
+for (const r of rows) {
+  if (r.ph) {
+    y += 8;
+    out.push(`<rect class="ph" x="0" y="${y}" width="${W}" height="30"/>`);
+    out.push(text(16, y + 20, 'pt', r.ph, 'start'));
+    y += 46;
+  } else if (r.m) {
+    const [a, b] = r.m;
+    const x1 = lanes[a].x, x2 = lanes[b].x, dir = x2 > x1 ? 1 : -1, mid = (x1 + x2) / 2;
+    const cls = 'ar' + (r.k ? ' k' : '') + (r.r ? ' r' : '') + (r.o ? ' o' : '');
+    out.push(text(mid, y + 2, 'lb' + (r.k ? ' k' : ''), r.c));
+    out.push(`<line class="${cls}" x1="${x1 + dir * 5}" y1="${y + 12}" x2="${x2 - dir * 7}" y2="${y + 12}" marker-end="url(#${r.k ? 'ak' : 'a'})"/>`);
+    if (r.d) out.push(text(mid, y + 29, 'dt', r.d));
+    y += r.d ? 52 : 38;
+  } else {
+    const lines = r.l, lh = 17;
+    const bw = Math.max(...lines.map(l => l.length)) * 6.5 + 24, bh = lines.length * lh + 12;
+    let bx = lanes[r.n].x - bw / 2;
+    bx = Math.max(PAD, Math.min(W - PAD - bw, bx));
+    y -= 4;
+    out.push(`<rect class="nb" x="${bx}" y="${y}" width="${bw}" height="${bh}" rx="6"/>`);
+    lines.forEach((l, i) => out.push(text(bx + 12, y + 18 + i * lh, 'nt', l, 'start')));
+    y += bh + 20;
+  }
+}
+
+const H = y + 10;
+const heads = lanes.map(l => {
+  const bw = 196;
+  return `<line class="ll" x1="${l.x}" y1="62" x2="${l.x}" y2="${H - 6}"/>` +
+    `<rect class="hd" x="${l.x - bw / 2}" y="12" width="${bw}" height="50" rx="8"/>` +
+    text(l.x, 34, 'hn', l.n) + text(l.x, 52, 'hs', l.s);
+}).join('');
+
+const defs = `<defs>
+<marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path class="mk" d="M0 0L10 5L0 10z"/></marker>
+<marker id="ak" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path class="mk k" d="M0 0L10 5L0 10z"/></marker>
+</defs>`;
+
+const svg = document.getElementById('seq');
+svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+// phase bands go under the lifelines, everything else above
+const bands = out.filter(o => o.startsWith('<rect class="ph"') || o.includes('class="pt"'));
+const rest = out.filter(o => !bands.includes(o));
+svg.innerHTML = defs + bands.join('') + heads + rest.join('');
+}
+</script>
+</body>
+</html>

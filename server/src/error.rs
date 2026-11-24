@@ -1,12 +1,12 @@
 //! Errors, and the single place where they become HTTP responses (spec §5, "Errors").
 //!
 //! Handlers return `Result<_, ApiError>` and use `?`. Thanks to the `From` impls below,
-//! `?` converts provider, KV and runtime errors into `ApiError` automatically.
+//! `?` converts provider, database and runtime errors into `ApiError` automatically.
 
 use std::fmt;
 
 use serde::Serialize;
-use worker::{KvError, Response};
+use worker::Response;
 
 /// What can go wrong while talking to a task manager.
 #[derive(Debug)]
@@ -24,8 +24,14 @@ pub enum ProviderError {
 /// Everything a handler can fail with.
 #[derive(Debug)]
 pub enum ApiError {
+    /// No key, or a key we don't know.
     Unauthorized,
+    /// The key is fine, but the task manager no longer accepts our token (access revoked):
+    /// the user has to connect again.
+    Reconnect,
     NotFound,
+    /// A pairing code or link that's too old or already used.
+    Expired,
     BadRequest(&'static str),
     Provider(ProviderError),
     Internal(String),
@@ -34,8 +40,11 @@ pub enum ApiError {
 impl ApiError {
     pub fn status(&self) -> u16 {
         match self {
-            ApiError::Unauthorized => 401,
-            ApiError::NotFound | ApiError::Provider(ProviderError::NotFound) => 404,
+            ApiError::Unauthorized | ApiError::Reconnect => 401,
+            ApiError::Provider(ProviderError::Status { status: 401, .. }) => 401,
+            ApiError::NotFound
+            | ApiError::Expired
+            | ApiError::Provider(ProviderError::NotFound) => 404,
             ApiError::BadRequest(_) => 400,
             ApiError::Provider(ProviderError::Unreachable(_)) => 503,
             ApiError::Provider(_) => 502,
@@ -47,7 +56,11 @@ impl ApiError {
     pub fn code(&self) -> &'static str {
         match self {
             ApiError::Unauthorized => "unauthorized",
+            ApiError::Reconnect | ApiError::Provider(ProviderError::Status { status: 401, .. }) => {
+                "reconnect"
+            }
             ApiError::NotFound | ApiError::Provider(ProviderError::NotFound) => "not_found",
+            ApiError::Expired => "expired",
             ApiError::BadRequest(code) => code,
             ApiError::Provider(ProviderError::Unreachable(_)) => "provider_unreachable",
             ApiError::Provider(_) => "provider_error",
@@ -113,12 +126,6 @@ impl From<worker::Error> for ApiError {
     }
 }
 
-impl From<KvError> for ApiError {
-    fn from(e: KvError) -> Self {
-        ApiError::Internal(format!("kv: {e}"))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -136,5 +143,11 @@ mod tests {
             body: String::new(),
         };
         assert_eq!(ApiError::from(upstream).status(), 502);
+        // Todoist refusing our token means "connect again", not "server error".
+        let revoked = ApiError::from(ProviderError::Status {
+            status: 401,
+            body: String::new(),
+        });
+        assert_eq!((revoked.status(), revoked.code()), (401, "reconnect"));
     }
 }

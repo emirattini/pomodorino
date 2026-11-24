@@ -19,6 +19,11 @@ function openMainMenu(ctrl as PomoController) as Void {
     }
     menu.addItem(new WatchUi.MenuItem("Statistics", null, :stats, null));
     menu.addItem(new WatchUi.MenuItem("Settings", null, :settings, null));
+    if (TaskSync.deviceKey().equals("")) {
+        menu.addItem(new WatchUi.MenuItem("Connect Todoist", "Work on today's tasks", :connect, null));
+    } else {
+        menu.addItem(new WatchUi.MenuItem("Disconnect Todoist", null, :disconnect, null));
+    }
     menu.addItem(new WatchUi.MenuItem("Credits", null, :credits, null));
     WatchUi.pushView(menu, new MainMenuDelegate(ctrl), WatchUi.SLIDE_UP);
 }
@@ -51,6 +56,11 @@ class MainMenuDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.pushView(new StatsView(_ctrl), new StatsDelegate(), WatchUi.SLIDE_LEFT);
         } else if (id == :settings) {
             openSettings(_ctrl);
+        } else if (id == :connect) {
+            openPairing(_ctrl);
+        } else if (id == :disconnect) {
+            WatchUi.pushView(new WatchUi.Confirmation("Disconnect Todoist?"),
+                new DisconnectConfirmation(_ctrl), WatchUi.SLIDE_LEFT);
         } else if (id == :credits) {
             var view = new CreditsView();
             WatchUi.pushView(view, new CreditsDelegate(view), WatchUi.SLIDE_LEFT);
@@ -138,5 +148,26 @@ class SettingEditor {
     function onValue(value as Number) as Void {
         _ctrl.setSetting(_key, value);
         _item.setSubLabel(settingLabel(_ctrl, _key));
+    }
+}
+
+// "Disconnect Todoist?" Yes: the server forgets this watch (and the account, if it was its last
+// watch) and Todoist's access is revoked. A task in progress is dropped, not sent.
+class DisconnectConfirmation extends WatchUi.ConfirmationDelegate {
+
+    private var _ctrl as PomoController;
+
+    function initialize(ctrl as PomoController) {
+        ConfirmationDelegate.initialize();
+        _ctrl = ctrl;
+    }
+
+    function onResponse(response as WatchUi.Confirm) as Boolean {
+        if (response == WatchUi.CONFIRM_YES) {
+            _ctrl.dropTask();
+            TaskSync.disconnect();
+            WatchUi.popView(WatchUi.SLIDE_IMMEDIATE); // the menu, under the confirmation
+        }
+        return true;
     }
 }

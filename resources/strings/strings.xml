@@ -1,7 +1,6 @@
 <strings>
     <string id="AppName">Pomodorino</string>
-    <string id="TasksEnabledTitle">Work on tasks (Todoist, ...)</string>
-    <string id="ServerUrlTitle">Server URL</string>
+    <string id="ServerUrlTitle">Own server URL (optional)</string>
     <string id="ServerUrlPrompt">https://pomodorino.example.workers.dev</string>
-    <string id="ApiKeyTitle">API key</string>
+    <string id="ApiKeyTitle">Own server API key (optional)</string>
 </strings>

@@ -285,6 +285,12 @@ class PomoController {
         TaskSync.flush();
     }
 
+    // Forgets the current task without sending anything (after Disconnect Todoist).
+    function dropTask() as Void {
+        task = null;
+        Application.Storage.deleteValue(KEY_TASK);
+    }
+
     private function saveTask() as Void {
         Application.Storage.setValue(KEY_TASK, task);
     }

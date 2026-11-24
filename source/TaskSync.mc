@@ -10,6 +10,10 @@ import Toybox.Time.Gregorian;
 // and are sent whenever the phone is reachable.
 module TaskSync {
 
+    // The public Pomodorino server. People running their own enter its URL in the phone settings.
+    const DEFAULT_SERVER = "https://pomodorino.erattini.workers.dev";
+
+    const KEY_DEVICE = "deviceKey";  // this watch's key, from "Connect Todoist" (PairView.mc)
     const KEY_CACHE = "taskCache";   // last task list: { "tasks" => [...] }
     const KEY_QUEUE = "pending";     // [{ "k" => "s", "b" => session } | { "k" => "c", "id" => taskId }]
     const MAX_QUEUE = 50;
@@ -18,34 +22,69 @@ module TaskSync {
 
     // ---- configuration (Garmin Connect app settings) ----
 
-    // A phone setting, or the personal value compiled in by build.sh (gen/Personal.mc) when it's empty.
     function prop(key as String) as String {
         var v = Application.Properties.getValue(key);
-        if (v instanceof String && !v.equals("")) {
-            return v;
-        }
-        if (key.equals("serverUrl")) {
-            return Personal.SERVER_URL;
-        }
-        return key.equals("apiKey") ? Personal.API_KEY : "";
+        return (v instanceof String) ? v : "";
     }
 
-    // On when switched on in the phone settings, or when a personal build has a server compiled in.
-    function enabled() as Boolean {
-        var on = Application.Properties.getValue("tasksEnabled") == true || !Personal.SERVER_URL.equals("");
-        return on && !prop("serverUrl").equals("") && !prop("apiKey").equals("");
-    }
-
+    // Server: the phone setting (own server), else a personal build's, else the public one.
     function baseUrl() as String {
         var url = prop("serverUrl");
+        if (url.equals("")) {
+            url = Personal.SERVER_URL.equals("") ? DEFAULT_SERVER : Personal.SERVER_URL;
+        }
         while (url.length() > 0 && url.substring(url.length() - 1, url.length()).equals("/")) {
             url = url.substring(0, url.length() - 1) as String;
         }
         return url;
     }
 
+    // Key: from "Connect Todoist", else the phone setting, else a personal build's.
+    function apiKey() as String {
+        var key = deviceKey();
+        if (key.equals("")) {
+            key = prop("apiKey");
+        }
+        return key.equals("") ? Personal.API_KEY : key;
+    }
+
+    function deviceKey() as String {
+        var k = Application.Storage.getValue(KEY_DEVICE);
+        return (k instanceof String) ? k : "";
+    }
+
+    // Task mode is on once the watch has a key.
+    function enabled() as Boolean {
+        return !apiKey().equals("");
+    }
+
+    // Saves the key from a finished pairing; the task list starts fresh for the new account.
+    function setDeviceKey(key as String) as Void {
+        Application.Storage.setValue(KEY_DEVICE, key);
+        Application.Storage.deleteValue(KEY_CACHE);
+        Application.Storage.deleteValue(KEY_QUEUE);
+    }
+
+    // "Disconnect Todoist": tells the server (best effort) and forgets the key, the list and the queue.
+    function disconnect() as Void {
+        var key = deviceKey();
+        if (!key.equals("")) {
+            Communications.makeWebRequest(baseUrl() + "/v1/device", null, {
+                :method => Communications.HTTP_REQUEST_METHOD_DELETE,
+                :headers => { "X-Api-Key" => key },
+                :responseType => Communications.HTTP_RESPONSE_CONTENT_TYPE_JSON
+            }, new Lang.Method(TaskSync, :onIgnored));
+        }
+        Application.Storage.deleteValue(KEY_DEVICE);
+        Application.Storage.deleteValue(KEY_CACHE);
+        Application.Storage.deleteValue(KEY_QUEUE);
+    }
+
+    function onIgnored(code as Number, data as Dictionary or String or Null) as Void {
+    }
+
     function options(method as Communications.HttpRequestMethod) as Dictionary {
-        var headers = { "X-Api-Key" => prop("apiKey") } as Dictionary;
+        var headers = { "X-Api-Key" => apiKey() } as Dictionary;
         if (method == Communications.HTTP_REQUEST_METHOD_POST) {
             headers["Content-Type"] = Communications.REQUEST_CONTENT_TYPE_JSON;
         }
@@ -123,7 +162,7 @@ module TaskSync {
             return "Phone not connected";
         }
         if (code == 401) {
-            return "Wrong API key";
+            return "Connect Todoist again";
         }
         if (code == Communications.NETWORK_REQUEST_TIMED_OUT) {
             return "Server timed out";

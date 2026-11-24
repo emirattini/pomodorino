@@ -10,14 +10,21 @@ command = "cargo install -q worker-build && worker-build --release"
 PROVIDER = "todoist"
 # Todoist filter for the watch's task list, see https://todoist.com/help/articles/introduction-to-filters
 TODOIST_FILTER = "today"
+# "Connect Todoist": the app registered at https://app.todoist.com/app/settings/integrations/app-management
+# (redirect URL: https://<this worker>/oauth/callback). The client secret is a secret, see below.
+TODOIST_CLIENT_ID = "bc881eb22d114f76a371e9ffbe90fcec"
 
-# Create the namespace with `npx wrangler kv namespace create POMODORINO_KV` and paste its id here.
-# `wrangler dev` simulates KV locally, so the placeholder is enough for local testing.
-[[kv_namespaces]]
-binding = "POMODORINO_KV"
-id = "2800540dea3a4f80a0428269fbcebf1d"
+# Users, watches and minutes spent (migrations/). Create it with `npx wrangler d1 create pomodorino`,
+# paste the id here, then `npx wrangler d1 migrations apply pomodorino --remote` (or --local for dev).
+[[d1_databases]]
+binding = "DB"
+database_name = "pomodorino"
+database_id = "75a4c90e-50e0-40f6-acab-eb5b6d670f24"
+migrations_dir = "migrations"
 
 # Secrets (never in this file):
-#   npx wrangler secret put API_KEY        the key you type into the watch settings
-#   npx wrangler secret put TODOIST_TOKEN  Todoist > Settings > Integrations > Developer
+#   npx wrangler secret put TODOIST_CLIENT_SECRET  the Todoist app's client secret ("Connect Todoist")
+#   npx wrangler secret put API_KEY                optional: the owner's key, for a single-user setup...
+#   npx wrangler secret put TODOIST_TOKEN          ...with this personal token (Todoist > Settings >
+#                                                  Integrations > Developer)
 # For `wrangler dev`, put them in .dev.vars instead (KEY=value, one per line).

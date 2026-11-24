@@ -1,7 +1,7 @@
 # Rust notes: a tour of this server
 
 Each section shows an idiom used in the code, why Rust does it that way, and where to find it.
-A good reading order is the same as the spec's §7.6: `model.rs` → `error.rs` → `store.rs` →
+A good reading order is the same as the spec's §7.6: `model.rs` → `error.rs` → `db.rs` →
 `providers/` → `api.rs` → `lib.rs`.
 
 ---
@@ -93,27 +93,27 @@ match self {
 ## 6. `Result`, `?` and `From`: error handling without exceptions (`error.rs`, `api.rs`)
 
 ```rust
-impl From<KvError> for ApiError {
-    fn from(e: KvError) -> Self { ApiError::Internal(format!("kv: {e}")) }
+impl From<ProviderError> for ApiError {
+    fn from(e: ProviderError) -> Self { ApiError::Provider(e) }
 }
 
 // in a handler returning Result<Response, ApiError>:
-let spent = app.store.spent(provider, &task.id).await?;
+let mut tasks = app.provider.list_today().await?;
 ```
 
 - A function that can fail returns `Result<T, E>`: `Ok(value)` or `Err(error)`. Errors are ordinary
   values, not exceptions, so you can see in each signature what can fail.
 - `?` means: "if this is `Err`, return it from my function now; otherwise unwrap the `Ok`". On the way
-  out it calls `From::from`, so a `KvError` turns into an `ApiError` by itself.
+  out it calls `From::from`, so a `ProviderError` (or a database error) turns into an `ApiError` by itself.
 - The result is one *error funnel*: every handler just writes `?`, and `ApiError::into_response` is the
   only place that decides status codes (spec §7.5: "a single point").
 - `.map_err(|e| ...)` converts an error by hand when there's no `From` impl, or when you want a
   specific variant (`ProviderError::Unreachable`).
 
-## 7. `Option` and `Result` combinators (`store.rs`, `api.rs`, `todoist.rs`)
+## 7. `Option` and `Result` combinators (`api.rs`, `todoist.rs`, `db.rs`)
 
 ```rust
-Ok(value.and_then(|v| v.parse().ok()))                                  // store.rs
+Ok(result.meta()?.and_then(|m| m.changes).unwrap_or(0))               // db.rs
 let given = req.headers().get("X-Api-Key")?.unwrap_or_default();       // api.rs
 if scope.as_deref().is_some_and(|s| s != "today") { ... }               // api.rs
 let projects = self.project_names().await.unwrap_or_default();         // todoist.rs
@@ -299,7 +299,66 @@ fn tag_minutes(word: &str) -> Option<u32> {
   `todoist.rs`, `.or_else(|| ...)` chains the three places an estimate can come from: the first one
   that's `Some` wins, and the later closures don't even run.
 
-## 16. Tests next to the code
+## 16. Idioms from "Connect Todoist" (`api.rs`, `keys.rs`, `db.rs`, `pair.rs`)
+
+**`let ... else`**, to unpack or leave early:
+
+```rust
+let (Some(expires_at), Some(refresh)) = (user.expires_at, user.refresh_token.as_deref()) else {
+    return Ok(user.access_token); // the token doesn't expire
+};
+```
+
+The pattern either matches, binding `expires_at` and `refresh` for the rest of the function, or the
+`else` block runs and must leave (`return`, `break`, ...). It keeps the main path unindented. Matching a
+*tuple* checks both `Option`s at once.
+
+**Const generics**: a function generic over a number, not a type.
+
+```rust
+fn random_bytes<const N: usize>() -> [u8; N] { ... }
+let key = hex(&random_bytes::<32>());
+```
+
+Arrays have their length in the type (`[u8; 32]`), so this returns a stack array of exactly that size,
+checked at compile time, with no `Vec` allocation.
+
+**Passing behaviour in, to test randomness**:
+
+```rust
+fn code_from(mut next_byte: impl FnMut() -> u8, len: usize) -> String
+```
+
+`pairing_code()` passes a closure that draws random bytes; the test passes one that returns fixed bytes,
+so the output can be checked exactly. `impl FnMut()` means "any closure that can be called repeatedly
+and may change its own state" (the test's closure advances an iterator). The function also does
+*rejection sampling*: `byte % 31` alone would favour the first letters, because 256 isn't a multiple of 31.
+
+**Letting the database do the atomic work** (`db.rs`):
+
+```sql
+INSERT INTO spent (user_id, task_id, minutes) VALUES (?, ?, ?)
+ON CONFLICT (user_id, task_id) DO UPDATE SET minutes = minutes + excluded.minutes
+RETURNING minutes
+```
+
+One statement inserts or adds, and returns the new total: no read-then-write race. Token refresh uses
+a *compare-and-swap*: `UPDATE ... WHERE id = ? AND refresh_token = ?old`. If another request refreshed
+first, zero rows change and we read its token instead of storing ours over it.
+
+**Matching several results at once**:
+
+```rust
+if let (Ok(todoist), Some(user)) = (todoist_app(&ctx.env), db.user(&user_id).await?) { ... }
+```
+
+Runs only if both are present. Note the `?` inside: a database error still propagates, while a missing
+Todoist configuration just skips the block.
+
+**`Option::map_or`** (`db.rs`): `s.map_or(JsValue::NULL, text)` is "the default if `None`, else apply the
+function". Here, a missing value becomes SQL `NULL`.
+
+## 17. Tests next to the code
 
 ```rust
 #[cfg(test)]
@@ -312,7 +371,7 @@ mod tests {
 
 `#[cfg(test)]` compiles the module only for `cargo test`. `use super::*` brings in the parent module,
 private items included, so pure logic (truncation, validation, status codes, Todoist JSON parsing) is
-tested without a Workers runtime. Anything that touches KV or `fetch` was checked end to end with
+tested without a Workers runtime. Anything that touches the database or `fetch` was checked end to end with
 `wrangler dev` and curl.
 
 ---
@@ -320,7 +379,7 @@ tested without a Workers runtime. Anything that touches KV or `fetch` was checke
 ### Exercises, if you want to practise
 
 1. Add a `GET /v1/stats` endpoint that returns the total minutes spent on a task (`?task=...`) from
-   KV. Touches: router, handler, `Store`.
+   the database. Touches: router, handler, `Db`.
 2. Make `Demo::complete` return `ProviderError::NotFound` for unknown ids, like `log_session` does.
    Then write a test for it. Tip: `async` tests need an executor, so test a plain helper function
    instead.

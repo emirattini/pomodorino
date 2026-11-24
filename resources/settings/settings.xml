@@ -1,8 +1,6 @@
-<!-- Edited in the Garmin Connect phone app: Pomodorino > Settings. See docs/tasks-spec.md. -->
+<!-- Garmin Connect phone app: Pomodorino > Settings. Only for people running their own server
+     (server/README.md); everyone else uses "Connect Todoist" in the watch menu. -->
 <settings>
-    <setting propertyKey="@Properties.tasksEnabled" title="@Strings.TasksEnabledTitle">
-        <settingConfig type="boolean"/>
-    </setting>
     <setting propertyKey="@Properties.serverUrl" title="@Strings.ServerUrlTitle" prompt="@Strings.ServerUrlPrompt">
         <settingConfig type="alphaNumeric"/>
     </setting>
