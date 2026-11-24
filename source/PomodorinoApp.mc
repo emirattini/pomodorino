@@ -36,6 +36,13 @@ class PomodorinoApp extends Application.AppBase {
         return [new PomoGlanceView()];
     }
 
+    // The color of the system's selection marker next to our glance (API 4.0+, on devices that
+    // support glance themes, like the Forerunner 165). Others ignore it.
+    (:glance)
+    function getGlanceTheme() as AppBase.GlanceTheme {
+        return AppBase.GLANCE_THEME_RED;
+    }
+
     function getServiceDelegate() {
         return [new PomoServiceDelegate()];
     }

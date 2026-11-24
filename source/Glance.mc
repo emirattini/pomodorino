@@ -6,7 +6,7 @@ import Toybox.WatchUi;
 
 // The app's glance (the quick view in the widget list), laid out like Garmin's own:
 //   Pomodorino              title
-//   ━━━━━━━━━──────────     progress of the current session: red focus, green break, blue long break
+//   /▰▰▰▰▰▰▰▰/ /──────────/  progress of the current session: red focus, green break, blue long break
 //   Consegna Pcd   20/50'   the task being worked on, or the most urgent task of the day, with the
 //                           minutes done on it out of its estimate
 // Glances can't make web requests, so the next task comes from the list saved the last time the app
@@ -35,8 +35,10 @@ class PomoGlanceView extends WatchUi.GlanceView {
         var frac = 0.0;
         var running = false;
         var focusSec = 0; // seconds of the focus session in progress, not yet in the task's "foc"
+        var session = IDLE; // the phase the app is in, even if its timer ran out while it was closed
         if (st instanceof Dictionary && st["ph"] instanceof Number && st["ph"] != IDLE) {
-            var dur = duration(st["ph"] as Number);
+            session = st["ph"] as Number;
+            var dur = duration(session);
             var elapsed = 0; // seconds into the current session
             if (st["run"] == true && st["end"] instanceof Number) {
                 var left = (st["end"] as Number) - now;
@@ -61,7 +63,7 @@ class PomoGlanceView extends WatchUi.GlanceView {
         title(dc, (h * 0.20).toNumber());
         bar(dc, (h * 0.50).toNumber(), w, h, ph, frac, running);
 
-        var task = taskLine(focusSec);
+        var task = taskLine(focusSec, session);
         taskRow(dc, (h * 0.80).toNumber(), w, task);
     }
 
@@ -79,28 +81,62 @@ class PomoGlanceView extends WatchUi.GlanceView {
         dc.drawText(0, y, Graphics.FONT_GLANCE, "Pomodorino", Graphics.TEXT_JUSTIFY_LEFT | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
-    // A rounded track with the elapsed part filled in the phase's color (dimmed while paused).
+    // Like Garmin's glance bars: the elapsed part is a slanted bar fading from greyish to the phase's
+    // color (red focus, green break, blue long break; dimmed while paused), then a small gap, then the
+    // rest as a thin grey line. Both start and end with a slash, like "/████/ /────/".
     private function bar(dc as Dc, y as Number, w as Number, h as Number, ph as Number, frac as Float, running as Boolean) as Void {
-        var bh = (h * 0.11).toNumber();
+        var bh = (h * 0.09).toNumber(); // the thick part
         bh = bh < 6 ? 6 : bh;
-        var top = y - bh / 2;
-        dc.setColor(0x333333, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(0, top, w, bh, bh / 2);
-        if (ph == IDLE || frac <= 0.0) {
-            return;
+        var th = bh / 3;                 // the thin line
+        th = th < 2 ? 2 : th;
+        var x = 0;
+        if (ph != IDLE && frac > 0.0) {
+            var fw = (w * frac).toNumber();
+            fw = fw < bh + 2 ? bh + 2 : fw;
+            var color = ph == SHORT_BREAK ? 0x44DD88 : (ph == LONG_BREAK ? 0x44AAFF : 0xFF3322);
+            if (!running) {
+                color = mix(color, 0x000000, 50); // paused: half brightness
+            }
+            gradient(dc, y - bh / 2, fw, bh, mix(color, 0x606060, 70), color);
+            x = fw + 4; // with the slants, about a 5-pixel gap at the line's height
         }
-        var color = ph == SHORT_BREAK ? 0x44DD88 : (ph == LONG_BREAK ? 0x44AAFF : 0xFF5544);
-        if (!running) {
-            color = ((color >> 1) & 0x7F7F7F); // paused: half brightness
+        if (x < w - th) {
+            dc.setColor(0x555555, Graphics.COLOR_TRANSPARENT);
+            slanted(dc, x, w, y - th / 2, th, th / 2);
         }
-        var fw = (w * frac).toNumber();
-        fw = fw < bh ? bh : fw;
-        dc.setColor(color, Graphics.COLOR_TRANSPARENT);
-        dc.fillRoundedRectangle(0, top, fw, bh, bh / 2);
+    }
+
+    // A parallelogram from x0 to x1 whose ends lean like "/" by `slant` pixels.
+    private function slanted(dc as Dc, x0 as Number, x1 as Number, top as Number, height as Number, slant as Number) as Void {
+        dc.fillPolygon([[x0 + slant, top], [x1, top], [x1 - slant, top + height], [x0, top + height]]);
+    }
+
+    // A slanted bar 0..width, drawn in thin slices whose color goes from `from` (left) to `to` (right).
+    private function gradient(dc as Dc, top as Number, width as Number, height as Number, from as Number, to as Number) as Void {
+        var step = 3;
+        var slant = height / 4;   // a slight lean, like Garmin's bars
+        var run = width - slant;  // where each slice's bottom-left corner can be
+        for (var i = 0; i < run; i += step) {
+            var j = i + step > run ? run : i + step;
+            dc.setColor(mix(from, to, (i * 100) / run), Graphics.COLOR_TRANSPARENT);
+            // +1 overlap so no hairline gaps show between slices
+            dc.fillPolygon([[i + slant, top], [j + slant + 1, top], [j + 1, top + height], [i, top + height]]);
+        }
+    }
+
+    // `a` with `pct` percent of `b` mixed in, channel by channel.
+    private function mix(a as Number, b as Number, pct as Number) as Number {
+        var out = 0;
+        for (var shift = 0; shift <= 16; shift += 8) {
+            var ca = (a >> shift) & 0xFF;
+            var cb = (b >> shift) & 0xFF;
+            out |= ((ca * (100 - pct) + cb * pct) / 100) << shift;
+        }
+        return out;
     }
 
     // [text, is a task (white) rather than a hint (grey), minutes done or null, estimate or null]
-    private function taskLine(focusSec as Number) as Array {
+    private function taskLine(focusSec as Number, session as Number) as Array {
         var task = Application.Storage.getValue("task");
         if (task instanceof Dictionary && task["title"] instanceof String) {
             // Logged before this session + this session's finished pomodoros + the one in progress,
@@ -110,6 +146,10 @@ class PomoGlanceView extends WatchUi.GlanceView {
             min = (min == 0 && sec > 30) ? 1 : min;
             var before = task["spent"] instanceof Number ? task["spent"] as Number : 0;
             return [task["title"], true, before + min, task["est"]];
+        }
+        // A session without a task: name the phase rather than suggest a task that isn't being done.
+        if (session != IDLE) {
+            return [session == SHORT_BREAK ? "Short break" : (session == LONG_BREAK ? "Long break" : "Focus"), false, null, null];
         }
         var cache = Application.Storage.getValue("taskCache");
         if (cache instanceof Dictionary) {
