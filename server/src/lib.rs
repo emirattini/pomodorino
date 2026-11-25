@@ -45,6 +45,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             pages::route(req, ctx, pair::callback)
         })
         .get("/privacy", |_, _| pages::privacy())
+        .get("/icon.png", |_, _| pages::icon())
         .get("/", |_, _| pages::home())
         .run(req, env)
         .await

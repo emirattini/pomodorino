@@ -2,11 +2,15 @@
 
 use std::future::Future;
 
-use worker::{Request, Response, RouteContext};
+use worker::{Headers, Request, Response, RouteContext};
 
 use crate::error::ApiError;
 
 const REPO: &str = "https://github.com/emirattini/pomodorino";
+
+/// The app's launcher tomato at 192 px (photo: Luc Viatour, CC BY-SA 3.0), built into the worker.
+/// `include_bytes!` reads the file at compile time, so there's nothing to upload separately.
+const ICON: &[u8] = include_bytes!("../assets/icon.png");
 
 /// Runs a page handler; an error becomes a friendly page instead of JSON.
 pub async fn route<F, Fut>(
@@ -52,24 +56,35 @@ pub fn page(title: &str, body: &str) -> worker::Result<Response> {
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
+<link rel="icon" href="/icon.png">
+<link rel="apple-touch-icon" href="/icon.png">
 <title>{title} · Pomodorino</title>
 <style>
   body {{ margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0b0b0c;
          color: #eee; font: 17px/1.5 system-ui, -apple-system, sans-serif; }}
   main {{ max-width: 26rem; padding: 2rem 1.5rem; text-align: center; }}
-  .logo {{ font-size: 3rem; }}
+  .logo {{ width: 96px; height: 96px; display: block; margin: 0 auto; }}
   h1 {{ font-size: 1.45rem; margin: .5rem 0 1rem; }}
   p {{ color: #bbb; }}
+  a {{ color: #ff7a6b; }}
   .code {{ font: 600 1.6rem ui-monospace, monospace; letter-spacing: .2em; color: #fff;
           background: #1c1c1f; border-radius: .6rem; padding: .5rem 1rem; display: inline-block; }}
   a.button {{ display: block; margin: 1.5rem 0 .5rem; padding: .9rem; border-radius: .7rem;
              background: #e44332; color: #fff; text-decoration: none; font-weight: 600; }}
   small, small a {{ color: #777; }}
 </style></head>
-<body><main><div class="logo">🍅</div><h1>{title}</h1>{body}
+<body><main><img class="logo" src="/icon.png" alt=""><h1>{title}</h1>{body}
 <p><small><a href="/privacy">Privacy</a> · <a href="{REPO}">Pomodorino on GitHub</a></small></p>
 </main></body></html>"#
     ))
+}
+
+/// `GET /icon.png`: the logo of the pages, and their browser-tab icon.
+pub fn icon() -> worker::Result<Response> {
+    let headers = Headers::new();
+    headers.set("Content-Type", "image/png")?;
+    headers.set("Cache-Control", "public, max-age=86400")?;
+    Ok(Response::from_bytes(ICON.to_vec())?.with_headers(headers))
 }
 
 /// Escapes text for HTML.
@@ -92,7 +107,9 @@ pub fn home() -> worker::Result<Response> {
         &format!(
             "<p>The server behind the Pomodorino app for Garmin watches. To connect your tasks, choose \
              <b>Connect Todoist</b> in the app's menu on your watch.</p>\
-             <p><a href=\"{REPO}\">Source code and instructions</a></p>"
+             <p><a href=\"{REPO}\">Source code and instructions</a></p>\
+             <p><small>Tomato photo: <a href=\"https://commons.wikimedia.org/wiki/File:Tomates_cerises_Luc_Viatour.jpg\">\
+             Luc Viatour</a>, CC BY-SA 3.0</small></p>"
         ),
     )
 }
