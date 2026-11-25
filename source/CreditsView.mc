@@ -8,7 +8,7 @@ class CreditsView extends WatchUi.View {
 
     // First line of each page is its heading; a leading "*" marks a name (drawn brighter).
     const PAGES = [
-        ["POMODORINO", "*Made by emileroutin", "", "github.com/emirattini/", "pomodorino", "MIT License"],
+        ["POMODORINO", "*Made by emileroutin", "", "github.com/emirattini/", "pomodorino", "Noncommercial license"],
         ["ICON", "*Photo: Luc Viatour /", "https://Lucnix.be", "CC BY-SA 3.0", "Background removed,", "resized"],
         ["FONTS · SIL OFL 1.1", "*Bebas Neue", "© 2010 Dharma Type", "*JetBrains Mono", "© 2020 The JetBrains", "Mono Project Authors"],
         ["FONTS · SIL OFL 1.1", "*Outfit", "© 2021 The Outfit", "Project Authors", "*Playfair Display", "© 2017 The Playfair", "Display Project Authors"],

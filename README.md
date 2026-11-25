@@ -103,5 +103,10 @@ docs/store/                   Connect IQ Store listing text and images
 
 ## License
 
-The code is under the [MIT License](LICENSE). Photos, the icon and the fonts keep their own licenses,
-listed in Credits above and in `docs/icons/photo/credits.json`.
+The code is under the [PolyForm Noncommercial License 1.0.0](LICENSE): you're free to use, study, change
+and share it for any noncommercial purpose (personal use, learning, hobby projects, nonprofits). Selling it,
+or using it in a commercial product or service, isn't allowed. For anything commercial, open an issue and ask.
+
+Versions published before this change (up to commit `791f9f5`) were under the MIT License and stay so.
+Photos, the icon and the fonts keep their own licenses, listed in Credits above and in
+`docs/icons/photo/credits.json`.

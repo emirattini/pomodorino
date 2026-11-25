@@ -27,7 +27,7 @@ A pomodoro timer for your wrist. Focus for 25 minutes, take a short break, and a
 Controls: START starts, pauses and resumes. UP opens the menu (skip break, restart, stop, statistics, settings, credits). DOWN shows the statistics.
 
 Credits
-Made by emileroutin. Open source (MIT): https://github.com/emirattini/pomodorino
+Made by emileroutin. Source code (PolyForm Noncommercial 1.0.0, free for noncommercial use): https://github.com/emirattini/pomodorino
 Icon and store image: tomato photo by Luc Viatour / https://Lucnix.be (Wikimedia Commons), licensed CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/). Changes: background removed, cropped and resized. The icon is shared under the same licence.
 Fonts (SIL Open Font License 1.1, https://openfontlicense.org): Bebas Neue © 2010 Dharma Type; JetBrains Mono © 2020 The JetBrains Mono Project Authors; Outfit © 2021 The Outfit Project Authors; Playfair Display © 2017 The Playfair Display Project Authors; Noto Sans © 2022 The Noto Project Authors.
 
