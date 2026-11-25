@@ -24,8 +24,13 @@ class PomoController {
     // Task session (docs/tasks-spec.md), null when working without a task:
     // id, title, est (estimate min or null), spent (min spent before, or null), sid (session id),
     // start (epoch s of the first start, 0 = not yet), foc (focus seconds of completed
-    // pomodoros), pom (completed pomodoros), int (a pomodoro was cut short)
+    // pomodoros), pom (completed pomodoros), int (a pomodoro was cut short), day (midnight of the day
+    // this time belongs to: each day's time is sent as its own session), last (epoch s of the last
+    // focus time added)
     var task as Dictionary? = null;
+    // Set on the first open of a new day with a task still selected: MainView asks "Still working on
+    // ...?" (StillWorkingView).
+    var askContinue as Boolean = false;
     private var _ticker as Timer.Timer?;
 
     const KEY_TASK = "task";
@@ -44,6 +49,7 @@ class PomoController {
         // While open, we alert ourselves; no background prompt needed.
         Background.deleteTemporalEvent();
         tick(false); // catch up on what happened while closed, silently
+        newDay();
         var t = new Timer.Timer();
         t.start(method(:onTick), 1000, true);
         _ticker = t;
@@ -77,6 +83,7 @@ class PomoController {
         if (t != null && done.size() > 0) {
             t["pom"] = (t["pom"] as Number) + done.size();
             t["foc"] = (t["foc"] as Number) + done.size() * PomoEngine.duration(PomoEngine.FOCUS, settings);
+            t["last"] = nowSec();
             saveTask();
         }
         if (ended != null) {
@@ -182,6 +189,7 @@ class PomoController {
         if (t != null && partial > 0) {
             t["foc"] = (t["foc"] as Number) + partial;
             t["int"] = true;
+            t["last"] = nowSec();
             saveTask();
         }
         if (phase() != PomoEngine.IDLE) {
@@ -229,7 +237,8 @@ class PomoController {
     function startTask(t as Dictionary) as Void {
         task = {
             "id" => t["id"], "title" => t["title"], "est" => t["estimateMin"], "spent" => t["spentMin"],
-            "sid" => TaskSync.newId(), "start" => 0, "foc" => 0, "pom" => 0, "int" => false
+            "sid" => TaskSync.newId(), "start" => 0, "foc" => 0, "pom" => 0, "int" => false,
+            "day" => Time.today().value()
         };
         saveTask();
     }
@@ -261,20 +270,7 @@ class PomoController {
         }
         var id = t["id"] as String;
         var min = taskFocusMin();
-        var pom = t["pom"] as Number;
-        if (min > 0 || pom > 0) {
-            var now = nowSec();
-            var start = t["start"] as Number;
-            TaskSync.enqueue({ "k" => "s", "b" => {
-                "sessionId" => t["sid"],
-                "taskId" => id,
-                "startedAt" => TaskSync.iso(start > 0 ? start : now),
-                "endedAt" => TaskSync.iso(now),
-                "focusMin" => min,
-                "pomodori" => pom,
-                "interrupted" => (t["int"] as Boolean) || partialFocus() > 0
-            } });
-        }
+        queueSession(t, min, nowSec(), (t["int"] as Boolean) || partialFocus() > 0);
         if (complete) {
             TaskSync.enqueue({ "k" => "c", "id" => id });
         }
@@ -283,6 +279,63 @@ class PomoController {
         Application.Storage.deleteValue(KEY_TASK);
         stopAll();
         TaskSync.flush();
+    }
+
+    // First open of a new day with a task still selected: the earlier day's time goes to the server as its
+    // own session (one Todoist comment per day), the task stays selected with today's time starting at
+    // zero, and MainView asks whether it's still the task to work on. A pomodoro still going counts for
+    // today, when it ends.
+    private function newDay() as Void {
+        var t = task;
+        if (t == null) {
+            return;
+        }
+        var today = Time.today().value();
+        if (!(t["day"] instanceof Number)) {
+            t["day"] = today; // a task selected before this version: start counting days now
+            saveTask();
+            return;
+        }
+        if ((t["day"] as Number) >= today) {
+            return;
+        }
+        // Only time already added up: a pomodoro paused overnight counts for today when it ends.
+        var sec = t["foc"] as Number;
+        var min = (sec / 60 == 0 && sec > 30) ? 1 : sec / 60;
+        var last = t["last"] instanceof Number ? t["last"] as Number : nowSec();
+        if (queueSession(t, min, last, t["int"] as Boolean)) {
+            var spent = t["spent"] instanceof Number ? t["spent"] as Number : 0;
+            t["spent"] = spent + min; // so "actual" on the finish screen still counts every day
+            TaskSync.updateCachedTask(t["id"] as String, min, false);
+        }
+        t["sid"] = TaskSync.newId();
+        t["start"] = isRunning() ? nowSec() : 0;
+        t["foc"] = 0;
+        t["pom"] = 0;
+        t["int"] = false;
+        t["day"] = today;
+        saveTask();
+        askContinue = true;
+        TaskSync.flush();
+    }
+
+    // Queues the task's time as one session (docs/tasks-spec.md). Returns false if there was nothing to send.
+    private function queueSession(t as Dictionary, min as Number, endSec as Number, interrupted as Boolean) as Boolean {
+        var pom = t["pom"] as Number;
+        if (min <= 0 && pom <= 0) {
+            return false;
+        }
+        var start = t["start"] as Number;
+        TaskSync.enqueue({ "k" => "s", "b" => {
+            "sessionId" => t["sid"],
+            "taskId" => t["id"],
+            "startedAt" => TaskSync.iso(start > 0 ? start : endSec),
+            "endedAt" => TaskSync.iso(endSec),
+            "focusMin" => min,
+            "pomodori" => pom,
+            "interrupted" => interrupted
+        } });
+        return true;
     }
 
     // Forgets the current task without sending anything (after Disconnect Todoist).

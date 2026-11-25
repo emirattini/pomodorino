@@ -18,26 +18,46 @@ class MainView extends WatchUi.View {
     }
 
     // In task mode, the app opens on today's task list (once per launch, and only with no timer going).
+    // On the first open of a new day with a task still selected, it asks whether to go on with it first.
     function onShow() as Void {
         if (_offered) {
             return;
         }
         _offered = true;
-        if (TaskSync.enabled() && !_ctrl.hasTask() && _ctrl.phase() == PomoEngine.IDLE) {
-            // Pushing a view from inside onShow isn't allowed: do it right after.
-            var t = new Timer.Timer();
-            t.start(method(:offerTasks), 50, false);
-            _later = t;
+        if (_ctrl.askContinue && _ctrl.hasTask()) {
+            _ctrl.askContinue = false;
+            later(method(:askStillWorking));
+        } else if (TaskSync.enabled() && !_ctrl.hasTask() && _ctrl.phase() == PomoEngine.IDLE) {
+            later(method(:offerTasks));
         }
     }
 
-    function offerTasks() as Void {
-        var t = _later; // kept in a field so the timer isn't freed before it fires
+    // Pushing a view from inside onShow isn't allowed: do it right after.
+    private function later(action as Method) as Void {
+        var t = new Timer.Timer();
+        t.start(action, 50, false);
+        _later = t; // kept in a field so the timer isn't freed before it fires
+    }
+
+    private function done() as Void {
+        var t = _later;
         if (t != null) {
             t.stop();
             _later = null;
         }
+    }
+
+    function offerTasks() as Void {
+        done();
         openTaskList(_ctrl, false);
+    }
+
+    function askStillWorking() as Void {
+        done();
+        if (_ctrl.hasTask()) {
+            var view = new StillWorkingView(_ctrl);
+            WatchUi.pushView(view, new StillWorkingDelegate(view, _ctrl), WatchUi.SLIDE_UP);
+        }
     }
 
     function onUpdate(dc as Dc) as Void {

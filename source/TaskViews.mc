@@ -182,9 +182,34 @@ class TaskMenuDelegate extends WatchUi.Menu2InputDelegate {
 
 // ---- end of a task session ----
 
+// In place of the current view (the menu, or "Still working on ...?").
 function openTaskSummary(ctrl as PomoController) as Void {
     var view = new TaskSummaryView(ctrl);
     WatchUi.switchToView(view, new TaskSummaryDelegate(view, ctrl), WatchUi.SLIDE_LEFT);
+}
+
+// One of two choices at the bottom of a screen; the selected one is outlined.
+function drawChoice(dc as Dc, cx as Number, y as Number, label as String, selected as Boolean) as Void {
+    var s = dc.getWidth() / 390.0;
+    if (selected) {
+        var hw = (110 * s).toNumber();
+        var hh = (21 * s).toNumber();
+        dc.setPenWidth(2);
+        dc.setColor(Theme.GOAL, Graphics.COLOR_TRANSPARENT);
+        dc.drawRoundedRectangle(cx - hw, y - hh, 2 * hw, 2 * hh, hh);
+    }
+    Draw.text(dc, cx, y, Graphics.FONT_XTINY, label, selected ? Theme.GOAL : Graphics.COLOR_LT_GRAY);
+}
+
+// The task title on up to two lines, centred on y.
+function drawTaskTitle(dc as Dc, cx as Number, y as Number, title as String) as Void {
+    var tw = (dc.getWidth() * 0.60).toNumber();
+    var lines = Draw.wrap(dc, title, tw, tw);
+    var lh = (dc.getFontHeight(Graphics.FONT_XTINY) * 0.85).toNumber();
+    var ty = y - (lines.size() - 1) * lh / 2;
+    for (var i = 0; i < lines.size(); i++) {
+        Draw.text(dc, cx, ty + i * lh, Graphics.FONT_XTINY, lines[i], Graphics.COLOR_WHITE);
+    }
 }
 
 // Estimated vs actual time, then Complete task / Continue later. BACK goes back to the timer.
@@ -212,14 +237,7 @@ class TaskSummaryView extends WatchUi.View {
         var before = t["spent"] instanceof Number ? t["spent"] as Number : 0;
         var actual = before + session;
 
-        // Title on one or two lines, centred on the same spot.
-        var tw = (w * 0.60).toNumber();
-        var lines = Draw.wrap(dc, t["title"] as String, tw, tw);
-        var lh = (dc.getFontHeight(Graphics.FONT_XTINY) * 0.85).toNumber();
-        var ty = (h * 0.17).toNumber() - (lines.size() - 1) * lh / 2;
-        for (var i = 0; i < lines.size(); i++) {
-            Draw.text(dc, cx, ty + i * lh, Graphics.FONT_XTINY, lines[i], Graphics.COLOR_WHITE);
-        }
+        drawTaskTitle(dc, cx, (h * 0.17).toNumber(), t["title"] as String);
 
         var labelY = (h * 0.29).toNumber();
         var valueY = (h * 0.39).toNumber();
@@ -241,19 +259,8 @@ class TaskSummaryView extends WatchUi.View {
         Draw.text(dc, cx, (h * 0.575).toNumber(), Graphics.FONT_XTINY,
             "This session " + minutesText(session) + " · " + pom + (pom == 1 ? " pomodoro" : " pomodoros"), Theme.DIM);
 
-        drawOption(dc, cx, (h * 0.70).toNumber(), s, "Complete task", choice == 0);
-        drawOption(dc, cx, (h * 0.83).toNumber(), s, "Continue later", choice == 1);
-    }
-
-    private function drawOption(dc as Dc, cx as Number, y as Number, s as Float, label as String, selected as Boolean) as Void {
-        if (selected) {
-            var hw = (110 * s).toNumber();
-            var hh = (21 * s).toNumber();
-            dc.setPenWidth(2);
-            dc.setColor(Theme.GOAL, Graphics.COLOR_TRANSPARENT);
-            dc.drawRoundedRectangle(cx - hw, y - hh, 2 * hw, 2 * hh, hh);
-        }
-        Draw.text(dc, cx, y, Graphics.FONT_XTINY, label, selected ? Theme.GOAL : Graphics.COLOR_LT_GRAY);
+        drawChoice(dc, cx, (h * 0.70).toNumber(), "Complete task", choice == 0);
+        drawChoice(dc, cx, (h * 0.83).toNumber(), "Continue later", choice == 1);
     }
 }
 
@@ -268,16 +275,17 @@ class TaskSummaryDelegate extends WatchUi.BehaviorDelegate {
         _ctrl = ctrl;
     }
 
+    // UP selects the upper choice, DOWN the lower one.
     function onPreviousPage() as Boolean {
-        return move();
+        return select(0);
     }
 
     function onNextPage() as Boolean {
-        return move();
+        return select(1);
     }
 
-    private function move() as Boolean {
-        _view.choice = 1 - _view.choice;
+    private function select(i as Number) as Boolean {
+        _view.choice = i;
         WatchUi.requestUpdate();
         return true;
     }
@@ -291,6 +299,78 @@ class TaskSummaryDelegate extends WatchUi.BehaviorDelegate {
             openTaskList(_ctrl, true); // pick the next task
         } else {
             WatchUi.popView(WatchUi.SLIDE_RIGHT);
+        }
+        return true;
+    }
+}
+
+// ---- a new day with a task still selected ----
+
+// "Still working on <task>?" on the first open of a new day. Continue (or BACK) keeps the task; Finish task
+// opens the finish screen (complete it, or keep it open in Todoist), then today's list.
+class StillWorkingView extends WatchUi.View {
+
+    var choice as Number = 0; // 0 continue, 1 finish
+    private var _ctrl as PomoController;
+
+    function initialize(ctrl as PomoController) {
+        View.initialize();
+        _ctrl = ctrl;
+    }
+
+    function onUpdate(dc as Dc) as Void {
+        Draw.clear(dc);
+        var t = _ctrl.task;
+        if (t == null) {
+            return;
+        }
+        var h = dc.getHeight();
+        var cx = dc.getWidth() / 2;
+        Draw.text(dc, cx, (h * 0.22).toNumber(), Graphics.FONT_XTINY, "STILL WORKING ON", Theme.DIM);
+        drawTaskTitle(dc, cx, (h * 0.37).toNumber(), t["title"] as String);
+        var spent = t["spent"] instanceof Number ? t["spent"] as Number : 0;
+        if (spent > 0) {
+            Draw.text(dc, cx, (h * 0.52).toNumber(), Graphics.FONT_XTINY, minutesText(spent) + " so far", Theme.DIM);
+        }
+        drawChoice(dc, cx, (h * 0.70).toNumber(), "Continue", choice == 0);
+        drawChoice(dc, cx, (h * 0.83).toNumber(), "Finish task", choice == 1);
+    }
+}
+
+class StillWorkingDelegate extends WatchUi.BehaviorDelegate {
+
+    private var _view as StillWorkingView;
+    private var _ctrl as PomoController;
+
+    function initialize(view as StillWorkingView, ctrl as PomoController) {
+        BehaviorDelegate.initialize();
+        _view = view;
+        _ctrl = ctrl;
+    }
+
+    // UP selects the upper choice, DOWN the lower one.
+    function onPreviousPage() as Boolean {
+        return select(0);
+    }
+
+    function onNextPage() as Boolean {
+        return select(1);
+    }
+
+    private function select(i as Number) as Boolean {
+        _view.choice = i;
+        WatchUi.requestUpdate();
+        return true;
+    }
+
+    function onKey(evt as WatchUi.KeyEvent) as Boolean {
+        if (evt.getKey() != WatchUi.KEY_ENTER) {
+            return false; // BACK: same as Continue
+        }
+        if (_view.choice == 0) {
+            WatchUi.popView(WatchUi.SLIDE_DOWN);
+        } else {
+            openTaskSummary(_ctrl);
         }
         return true;
     }

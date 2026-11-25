@@ -68,12 +68,18 @@ Se `tasksEnabled == false` o mancano `serverUrl`/`apiKey` → comportamento attu
    - Riepilogo: `Stimato 30' · Reale 45' (+15')`, n. pomodori.
    - Azioni: **Completa task** / **Continua più tardi**.
 5. La sessione viene inviata al server (o accodata).
+6. **Nuovo giorno con una task ancora selezionata** (prima apertura dell'app nel giorno nuovo): il tempo
+   dei giorni precedenti parte come sessione a sé, poi la schermata **"Still working on <task>?"** offre
+   **Continue** (o BACK: si resta sulla task, il conteggio di oggi riparte da zero) e **Finish task** (il
+   riepilogo del punto 4, poi la lista di oggi).
 
 ### 4.4 Regole di conteggio del tempo
 - Si conta **solo il tempo di focus** effettivamente trascorso. Le pause non contano.
 - Pomodoro interrotto: si conta il focus trascorso, arrotondato per difetto al minuto (minimo 1 min se > 30 s).
 - Pausa del timer (se supportata): il tempo in pausa non conta.
-- **Una sessione = una task**, aggregata: si invia un solo record a fine sessione, non uno per pomodoro (meno richieste, meno batteria).
+- **Una sessione = una task in un giorno**, aggregata: si invia un solo record a fine sessione, non uno per
+  pomodoro (meno richieste, meno batteria). Se la task resta aperta oltre la mezzanotte, ogni giorno ha la
+  sua sessione (un commento Todoist al giorno). Un pomodoro ancora in corso all'apertura conta per oggi.
 
 ### 4.5 Coda offline
 - Le sessioni si salvano in `Application.Storage` (lista `pendingSessions`).
