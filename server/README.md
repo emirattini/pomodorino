@@ -98,6 +98,20 @@ cargo fmt                                            # standard formatting
 6. In the watch app, `TaskSync.DEFAULT_SERVER` (source/TaskSync.mc) is the server everyone uses.
    Change it, or set **Own server URL** in the app's phone settings.
 
+### Automatic deploys
+
+[`.github/workflows/server.yml`](../.github/workflows/server.yml) checks every change to `server/`
+(`cargo fmt --check`, clippy, tests). On `main` it then applies the D1 migrations and deploys, after an
+approval: the deploy job runs in a GitHub environment called `production` with you as required reviewer.
+Set up once, in the repo's Settings → Environments → `production`:
+- **Required reviewers**: yourself.
+- **Deployment branches**: `main` only.
+- **Secrets**: `CLOUDFLARE_API_TOKEN` (Cloudflare → My Profile → API Tokens, template "Edit Cloudflare
+  Workers", plus D1: Edit) and `CLOUDFLARE_ACCOUNT_ID` (`npx wrangler whoami`).
+
+The "Run workflow" button on the Actions tab redeploys without a change. `npx wrangler deploy` by hand
+still works.
+
 Optional, single-user: `npx wrangler secret put API_KEY` (any long random string, `openssl rand -hex 24`)
 and `npx wrangler secret put TODOIST_TOKEN` (Todoist → Settings → Integrations → Developer) let a watch
 use that key directly. `./build.sh` compiles in `server/.server-url` and `server/.api-key` (both

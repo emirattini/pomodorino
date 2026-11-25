@@ -1,0 +1,78 @@
+# The server (server/): checks on every change, deploy to Cloudflare from main.
+#
+# - Pull requests and pushes that touch server/: formatting, clippy, tests.
+# - Pushes to main, once the checks pass: D1 migrations, then `wrangler deploy`. The deploy job runs in the
+#   `production` environment, which waits for an approval on GitHub (Settings → Environments).
+#
+# Secrets (on the `production` environment): CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID. The worker's own
+# secrets (TODOIST_CLIENT_SECRET, API_KEY, TODOIST_TOKEN) live on Cloudflare and aren't touched by a deploy.
+# Pull requests from forks never get these secrets, and never reach the deploy job.
+
+name: Server
+
+on:
+  push:
+    branches: [main]
+    paths: ["server/**", ".github/workflows/server.yml"]
+  pull_request:
+    paths: ["server/**", ".github/workflows/server.yml"]
+  workflow_dispatch: # "Run workflow" button: redeploy without a change
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server
+      - run: cargo fmt --check
+      - run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
+      - run: cargo test
+
+  deploy:
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://pomodorino.erattini.workers.dev
+    # One deploy at a time; a newer one waits instead of cancelling one in progress.
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: server
+      # Migrations first: they only ever add, so the running version keeps working with the new tables.
+      - name: Apply D1 migrations
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: server
+          wranglerVersion: "4.168.0"
+          command: d1 migrations apply pomodorino --remote
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: server
+          wranglerVersion: "4.168.0"
+          command: deploy
