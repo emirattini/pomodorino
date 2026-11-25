@@ -1,0 +1,15 @@
+info face="timer_ember" size=47 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=1,1
+common lineHeight=36 base=35 scaleW=253 scaleH=37 pages=1 packed=0
+page id=0 file="timer_ember.png"
+chars count=11
+char id=48 x=1 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=49 x=25 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=50 x=49 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=51 x=73 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=52 x=97 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=53 x=121 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=54 x=145 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=55 x=169 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=56 x=193 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=57 x=217 y=1 width=22 height=34 xoffset=0 yoffset=1 xadvance=22 page=0 chnl=15
+char id=58 x=241 y=1 width=10 height=26 xoffset=0 yoffset=9 xadvance=10 page=0 chnl=15

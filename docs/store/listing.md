@@ -12,7 +12,17 @@ Watch App, Productivity (or Tools)
 
 ## Devices
 
-Forerunner 165, Forerunner 165 Music
+45 watches, all round with five buttons (the list in `manifest.xml`):
+
+- **Forerunner**: 70, 165, 165 Music, 170, 170 Music, 255, 255 Music, 265, 265S, 570 (42 and 47 mm), 955 / Solar,
+  965, 970
+- **fēnix**: 7S, 7, 7X (also quatix 7, quatix 7X Solar, tactix 7, Enduro 2), 7S Pro, 7 Pro, 7X Pro (also the
+  Solar Editions without Wi-Fi), 8 (43, 47, 51 mm, Pro, Solar; also tactix 8, quatix 8), 9 (43, 47, 51 mm, Pro,
+  Pro Solar), fēnix E
+- **epix**: Gen 2, Pro Gen 2 (42, 47, 51 mm; also quatix 7 Pro, D2 Mach 1 Pro, tactix 7 AMOLED)
+- **Enduro**: 3, 4
+- **Instinct**: 3 AMOLED (45 and 50 mm)
+- **MARQ**: Gen 2 (all editions, Aviator), Gen 3
 
 ## Description
 

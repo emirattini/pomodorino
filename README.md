@@ -1,6 +1,8 @@
 # Pomodorino 🍅
 
-A Pomodoro watch app for the Garmin Forerunner 165 (and 165 Music), built with Connect IQ.
+A Pomodoro watch app for Garmin watches, built with Connect IQ. It runs on 45 round, five-button watches:
+Forerunner 70 to 970, fēnix 7 / 8 / 9 / E, epix Gen 2, Enduro 3 / 4, Instinct 3 AMOLED and MARQ (the list is in
+[`docs/store/listing.md`](docs/store/listing.md)). Made on a Forerunner 165.
 
 ## Features
 
@@ -38,9 +40,17 @@ server instead (optional): [server/README.md](server/README.md).
 ## Setup (Manjaro / Arch)
 
 1. Install the SDK Manager: `yay -S connectiq-sdk-manager`
-2. Run `connectiq-sdk-manager` and log in with your Garmin account. Download the latest **SDK**, then under **Devices** download **Forerunner 165** (and 165 Music if you have it).
+2. Run `connectiq-sdk-manager` and log in with your Garmin account. Download the latest **SDK**, then under **Devices** download the watches you build for (Forerunner 165, Fenix 7, ...).
 3. Build: `./build.sh`. The first run creates a developer key (`developer_key.der`). Keep it, because future builds must be signed with the same key.
-4. Try it in the simulator: `./build.sh sim`
+4. Try it in the simulator: `./build.sh sim`. For another watch: `./build.sh build fenix7`, `./build.sh sim fenix7`.
+   On Manjaro / Arch the simulator doesn't start (it needs `libwebkit2gtk-4.0`, which is no longer packaged).
+   Run it in Docker instead, on a hidden screen: `tools/sim.sh image` once, then `tools/sim.sh start`,
+   `tools/sim.sh run fenix7`, `tools/sim.sh shot out.png` (see the script for keys and taps).
+
+Each screen size has its own bitmap fonts: `resources/fonts/` for 390 px, `resources-round-<W>x<W>/` for the
+others (240, 260, 280, 360, 416, 454), all made by `tools/build_fonts.sh`. To add a watch: add it to
+`manifest.xml`, add its screen size to `tools/build_fonts.sh` if it's new, then run `tools/build_fonts.sh` and
+`tools/launcher_icons.py` (icons at the size each watch expects).
 
 ## Install on the watch (sideload)
 

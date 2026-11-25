@@ -14,3 +14,6 @@ docs/icons/photo/candidate1.jpg
 gen/
 # Personal reference photos of the watch, kept local
 docs/screenshots/
+# Credentials kept by hand, never committed
+cloudflare-token.txt
+*.token

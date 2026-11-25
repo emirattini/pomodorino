@@ -1,5 +1,6 @@
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.System;
 import Toybox.WatchUi;
 
 // Task list and end-of-session summary (docs/tasks-spec.md §4.3).
@@ -129,17 +130,21 @@ function buildTaskMenu(tasks as Array, title as String) as WatchUi.Menu2 {
     return menu;
 }
 
-// "Work · est 30' · 15' done"
+// "Work · 15' / 30'" (done / estimate), "Work · est 30'" or "Work · 15' done". The project is left out on
+// screens narrower than 300 px (Fenix 7: 240-280), where the whole line wouldn't fit.
 function taskSubLabel(t as Dictionary) as String? {
     var parts = [] as Array<String>;
-    if (t["project"] instanceof String) {
+    if (t["project"] instanceof String && System.getDeviceSettings().screenWidth >= 300) {
         parts.add(t["project"] as String);
     }
-    if (t["estimateMin"] instanceof Number) {
-        parts.add("est " + minutesText(t["estimateMin"] as Number));
-    }
-    if (t["spentMin"] instanceof Number && (t["spentMin"] as Number) > 0) {
-        parts.add(minutesText(t["spentMin"] as Number) + " done");
+    var est = t["estimateMin"] instanceof Number ? t["estimateMin"] as Number : 0;
+    var spent = t["spentMin"] instanceof Number ? t["spentMin"] as Number : 0;
+    if (est > 0 && spent > 0) {
+        parts.add(minutesText(spent) + " / " + minutesText(est));
+    } else if (est > 0) {
+        parts.add("est " + minutesText(est));
+    } else if (spent > 0) {
+        parts.add(minutesText(spent) + " done");
     }
     if (parts.size() == 0) {
         return null;

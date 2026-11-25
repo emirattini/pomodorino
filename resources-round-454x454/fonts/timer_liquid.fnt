@@ -1,0 +1,15 @@
+info face="timer_liquid" size=99 bold=0 italic=0 charset="" unicode=1 stretchH=100 smooth=1 aa=1 padding=0,0,0,0 spacing=1,1
+common lineHeight=77 base=74 scaleW=586 scaleH=73 pages=1 packed=0
+page id=0 file="timer_liquid.png"
+chars count=11
+char id=48 x=1 y=1 width=65 height=70 xoffset=0 yoffset=3 xadvance=65 page=0 chnl=15
+char id=49 x=68 y=1 width=33 height=68 xoffset=16 yoffset=5 xadvance=65 page=0 chnl=15
+char id=50 x=103 y=1 width=53 height=69 xoffset=6 yoffset=3 xadvance=65 page=0 chnl=15
+char id=51 x=158 y=1 width=53 height=69 xoffset=6 yoffset=5 xadvance=65 page=0 chnl=15
+char id=52 x=213 y=1 width=59 height=68 xoffset=3 yoffset=5 xadvance=65 page=0 chnl=15
+char id=53 x=274 y=1 width=53 height=69 xoffset=6 yoffset=5 xadvance=65 page=0 chnl=15
+char id=54 x=329 y=1 width=56 height=69 xoffset=5 yoffset=5 xadvance=65 page=0 chnl=15
+char id=55 x=387 y=1 width=53 height=68 xoffset=6 yoffset=5 xadvance=65 page=0 chnl=15
+char id=56 x=442 y=1 width=55 height=70 xoffset=5 yoffset=3 xadvance=65 page=0 chnl=15
+char id=57 x=499 y=1 width=56 height=68 xoffset=5 yoffset=4 xadvance=65 page=0 chnl=15
+char id=58 x=557 y=1 width=27 height=41 xoffset=0 yoffset=32 xadvance=27 page=0 chnl=15
