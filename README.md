@@ -13,8 +13,10 @@ A Pomodoro watch app for the Garmin Forerunner 165 (and 165 Music), built with C
 - **On-watch settings**: style, focus, short break, long break, long break interval, daily goal, auto-start.
 - **Tasks (optional)**: work on today's tasks from Todoist. Pick a task when the app opens and see its title on
   the timer. When you finish, you get *estimated vs actual* time, can complete the task, and the focus time is
-  logged on it. Sessions are queued on the watch while the phone is away. This needs the small server in
-  [`server/`](server/README.md) (Rust, Cloudflare Workers free plan). Spec: [`docs/tasks-spec.md`](docs/tasks-spec.md).
+  logged on it. Sessions are queued on the watch while the phone is away. It goes through a small server
+  that is already running at `pomodorino.erattini.workers.dev`: users just choose **Connect Todoist**, nothing
+  to install. Its code is in [`server/`](server/README.md) (Rust, Cloudflare Workers), for anyone who wants
+  to run their own. Spec: [`docs/tasks-spec.md`](docs/tasks-spec.md).
 
 ## Controls
 
@@ -30,8 +32,8 @@ On the task summary: UP/DOWN to choose *Complete task* or *Continue later*, STAR
 
 To work on tasks, choose **Connect Todoist** in the menu. Your phone gets a notification from Garmin Connect:
 open it, log in to Todoist, and the watch shows today's tasks a few seconds later. **Disconnect Todoist** in
-the same menu removes the link and everything the server stored. How it works and how to run your own
-server: [server/README.md](server/README.md).
+the same menu removes the link and everything the server stored. How it works, and how to run your own
+server instead (optional): [server/README.md](server/README.md).
 
 ## Setup (Manjaro / Arch)
 

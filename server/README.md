@@ -8,6 +8,10 @@ received) in a D1 (SQLite) database.
 Anyone can connect: **Connect Todoist** in the watch menu opens a page on the phone, the user logs in to
 Todoist, and the watch is linked. Nothing to type on the watch, no settings.
 
+> **Using the app? You don't need any of this.** The app uses the server already running at
+> `https://pomodorino.erattini.workers.dev`. This folder is for developing the server, or for running your
+> own copy and pointing the app at it with the **Own server URL** setting.
+
 ## How connecting works
 
 ```
