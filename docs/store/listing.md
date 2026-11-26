@@ -54,6 +54,9 @@ First release.
   made with `tools/cover.py docs/store/covers`
 - Icon: the store takes it from the app package. If the form asks for a bigger image, the original photo is on
   Wikimedia Commons (File:Tomates_cerises_Luc_Viatour.jpg) and can be cut out again with `tools/photo_icon.py`.
-- Screenshots (390x390, one per style plus the statistics screen): `docs/store/screens/screen_<n>_<name>.png`, made with
-  `tools/screens.py docs/store/screens` from a port of the styles' drawing code and the app's own fonts.
-  Replace them with simulator captures once the simulator runs.
+- Screenshots (390x390): `docs/store/screens/screen_<n>_<name>.png`.
+  - 1-6: one per style plus the statistics screen, made with `tools/screens.py docs/store/screens` from a
+    port of the styles' drawing code and the app's own fonts.
+  - 7-11, the Todoist features: today's tasks, the timer on a task, estimate vs actual at the end, "Still
+    working on" on a new day, connecting from the phone. Real captures from the simulator
+    (`tools/sim.sh`, Forerunner 165) with the server's demo tasks.
