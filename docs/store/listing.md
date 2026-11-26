@@ -56,6 +56,25 @@ Made by emileroutin. Source code (PolyForm Noncommercial 1.0.0, free for noncomm
 Icon and store image: tomato photo by Luc Viatour / https://Lucnix.be (Wikimedia Commons), licensed CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/). Changes: background removed, cropped and resized. The icon is shared under the same licence.
 Fonts (SIL Open Font License 1.1, https://openfontlicense.org): Bebas Neue © 2010 Dharma Type; JetBrains Mono © 2020 The JetBrains Mono Project Authors; Outfit © 2021 The Outfit Project Authors; Playfair Display © 2017 The Playfair Display Project Authors; Noto Sans © 2022 The Noto Project Authors.
 
+## Short description
+
+The same, for skimmers (about 750 characters). Use this one or the full one above.
+
+A pomodoro timer for your wrist, with your Todoist tasks.
+
+• Focus 25 minutes, break 5, a long break every four. All times can be changed on the watch.
+• Connect Todoist from your phone, pick one of today's tasks, and your focus time is added to it.
+• When you finish, see estimated vs actual time.
+• Keeps running in the background: the watch buzzes when it's break time.
+• Daily goal, streaks, a 7-day chart, and five styles to choose from.
+
+START starts and pauses, UP opens the menu, DOWN shows your stats.
+
+Todoist is optional and works with a free account. Privacy: https://pomodorino.erattini.workers.dev/privacy
+Pomodorino is not created by, affiliated with, or supported by Doist.
+
+Keep cooking! Enjoying it? Buy me a coffee: https://buymeacoffee.com/emileroutin
+
 ## What's new (version 1.1.0)
 
 - 45 watches: Forerunner 70 to 970, fēnix 7, 8, 9 and E, epix, Enduro 3 and 4, Instinct 3 AMOLED, MARQ.
