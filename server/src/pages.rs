@@ -7,6 +7,7 @@ use worker::{Headers, Request, Response, RouteContext};
 use crate::error::ApiError;
 
 const REPO: &str = "https://github.com/emirattini/pomodorino";
+const COFFEE: &str = "https://buymeacoffee.com/emileroutin";
 
 /// The app's launcher tomato at 192 px (photo: Luc Viatour, CC BY-SA 3.0), built into the worker.
 /// `include_bytes!` reads the file at compile time, so there's nothing to upload separately.
@@ -108,6 +109,7 @@ pub fn home() -> worker::Result<Response> {
             "<p>The server behind the Pomodorino app for Garmin watches. To connect your tasks, choose \
              <b>Connect Todoist</b> in the app's menu on your watch.</p>\
              <p><a href=\"{REPO}\">Source code and instructions</a></p>\
+             <p>Enjoying it? <a href=\"{COFFEE}\">Buy me a coffee ☕</a></p>\
              <p><small>Tomato photo: <a href=\"https://commons.wikimedia.org/wiki/File:Tomates_cerises_Luc_Viatour.jpg\">\
              Luc Viatour</a>, CC BY-SA 3.0</small></p>"
         ),

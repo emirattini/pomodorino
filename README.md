@@ -4,6 +4,8 @@ A Pomodoro watch app for Garmin watches, built with Connect IQ. It runs on 45 ro
 Forerunner 70 to 970, fēnix 7 / 8 / 9 / E, epix Gen 2, Enduro 3 / 4, Instinct 3 AMOLED and MARQ (the list is in
 [`docs/store/listing.md`](docs/store/listing.md)). Made on a Forerunner 165.
 
+Free, and it stays free. If it helps you focus, you can [buy me a coffee ☕](https://buymeacoffee.com/emileroutin).
+
 ## Features
 
 - **Pomodoro sessions**: focus, short break, and a long break every N pomodoros. Defaults are 25 / 5 / 15 min with a long break every 4.
