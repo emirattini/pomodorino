@@ -66,10 +66,14 @@ Version 1.0.0: first release (Forerunner 165).
 ## Files
 
 - App package: `bin/Pomodorino.iq` (build with `./build.sh release`)
-- Hero image (1440x720): `docs/store/hero.png` (Ember + Liquid) or `docs/store/hero_drain_mono.png`,
-  made with `tools/hero.py OUT [FRONT BACK]`
+- Hero image (1440x720): `docs/store/hero_tasks.png` (today's tasks + Drain, from 1.1.0; made with
+  `tools/hero.py OUT --tasks`). Earlier: `docs/store/hero.png` (Ember + Liquid) or
+  `docs/store/hero_drain_mono.png`, made with `tools/hero.py OUT [FRONT BACK]`
 - Cover image (500x500): one of `docs/store/covers/cover_<style>.png` (comparison: `cover_sheet.png`),
   made with `tools/cover.py docs/store/covers`
+- Icons for the store on the watch ("App Store on Device", optional, 128x128): `docs/store/device_icons/`,
+  one per color count (`icon_128_full.png` for AMOLED, `icon_128_64colors.png` for MIP, then 16, 8 and 2
+  colors). Put each in the slot with the matching label. Made with `tools/store_icons.py`.
 - Icon: the store takes it from the app package. If the form asks for a bigger image, the original photo is on
   Wikimedia Commons (File:Tomates_cerises_Luc_Viatour.jpg) and can be cut out again with `tools/photo_icon.py`.
 - Screenshots (390x390): `docs/store/screens/screen_<n>_<name>.png`.

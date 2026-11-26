@@ -2,7 +2,9 @@
 """Connect IQ Store hero image (1440x720): title, tagline, feature pills, and two watch screens.
 
 Usage: hero.py OUT.png [FRONT BACK]   styles: ember drain mono liquid classic (default: ember liquid)
-The watch screens are the design mockups from tools/variants.py (rendered here at 2x for sharpness),
+       hero.py OUT.png --tasks         the Todoist banner: today's tasks in front (the simulator screenshot
+                                        docs/store/screens/screen_7_tasks.png), Drain behind
+The style screens are the design mockups from tools/variants.py (rendered here at 2x for sharpness),
 not simulator screenshots. The tomato is the launcher-icon cutout (photo: Luc Viatour, CC BY-SA 3.0).
 """
 import math, os, sys
@@ -10,6 +12,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = sys.argv[1]
+TASKS = sys.argv[2:3] == ["--tasks"]
 FRONT, BACK = (sys.argv[2], sys.argv[3]) if len(sys.argv) > 3 else ("ember", "liquid")
 # mockup progress (p) and animation phase (t) that look good for each style
 POSE = {"ember": (0.62, 0.25), "drain": (0.40, 0.25), "mono": (0.58, 0.25), "liquid": (0.55, 0.40), "classic": (0.62, 0.25)}
@@ -36,6 +39,15 @@ def screen(name, p, t):
     """One watch screen as RGBA, round, at 780 px."""
     img = Image.new("RGBA", (W, W), (0, 0, 0, 255))
     ns[name](img, ImageDraw.Draw(img), p, t)
+    mask = Image.new("L", (W, W), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, W - 1, W - 1), fill=255)
+    img.putalpha(mask)
+    return img
+
+
+def capture(name):
+    """A 390 px simulator screenshot from docs/store/screens/ as a round RGBA face at 780 px."""
+    img = Image.open(f"{ROOT}/docs/store/screens/{name}.png").convert("RGBA").resize((W, W), Image.LANCZOS)
     mask = Image.new("L", (W, W), 0)
     ImageDraw.Draw(mask).ellipse((0, 0, W - 1, W - 1), fill=255)
     img.putalpha(mask)
@@ -106,8 +118,12 @@ bg = Image.composite(warm, bg, glow.point(lambda v: v * 150 // 255))
 canvas = bg.convert("RGBA")
 
 # ---- watches: one behind on the right, one in front ----
-back = watch(screen("v_" + BACK, *POSE[BACK]), 330)
-front = watch(screen("v_" + FRONT, *POSE[FRONT]), 390)
+if TASKS:
+    back = watch(screen("v_drain", *POSE["drain"]), 330)
+    front = watch(capture("screen_7_tasks"), 390)
+else:
+    back = watch(screen("v_" + BACK, *POSE[BACK]), 330)
+    front = watch(screen("v_" + FRONT, *POSE[FRONT]), 390)
 shadowed(canvas, dim(back, 0.8), (HW - 28 - back.width, HH // 2 - back.height // 2 - 40))
 fx = 1012 - front.width // 2
 fy = HH // 2 - front.height // 2 + 10
@@ -123,12 +139,13 @@ shadowed(canvas, tom, (x0 - 10, 78), blur=14, alpha=140)
 title = outfit(104, b"Bold")
 d.text((x0, 330), "Pomodorino", font=title, fill=(250, 244, 236), anchor="ls")
 tag = outfit(46, b"Regular")
-d.text((x0 + 4, 400), "The pomodoro timer", font=tag, fill=(215, 205, 196), anchor="ls")
-d.text((x0 + 4, 454), "for your wrist", font=tag, fill=(215, 205, 196), anchor="ls")
+lines = ("Focus on today's", "tasks, on your wrist") if TASKS else ("The pomodoro timer", "for your wrist")
+d.text((x0 + 4, 400), lines[0], font=tag, fill=(215, 205, 196), anchor="ls")
+d.text((x0 + 4, 454), lines[1], font=tag, fill=(215, 205, 196), anchor="ls")
 
 pill = outfit(34, b"Medium")
 px, py = x0, 506
-for label in ("Daily goal", "Streaks", "5 styles"):
+for label in (("Todoist", "Daily goal", "5 styles") if TASKS else ("Daily goal", "Streaks", "5 styles")):
     w = d.textlength(label, font=pill)
     box = (px, py, px + w + 44, py + 62)
     d.rounded_rectangle(box, radius=31, outline=(255, 176, 0), width=3)
