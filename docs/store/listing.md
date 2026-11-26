@@ -26,24 +26,42 @@ Watch App, Productivity (or Tools)
 
 ## Description
 
-A pomodoro timer for your wrist. Focus for 25 minutes, take a short break, and after four rounds a long one. All the times can be changed on the watch.
+A pomodoro timer for your wrist, with your Todoist tasks. Focus for 25 minutes, take a short break, and after four rounds a long one. All the times can be changed on the watch.
 
+Work on your tasks (optional, needs a free Todoist account)
+- Connect Todoist once from your phone: no typing on the watch.
+- Pick one of today's tasks and the timer runs on it. The time you focus is added to the task as a comment.
+- At the end, see estimated vs actual time, then complete the task or keep it for later. Write an estimate in the task title, like "Report ~1h30", or use Todoist's duration.
+- Left a task open overnight? Each day's time goes to Todoist separately, and the next morning the app asks if you're still on it.
+- No phone nearby? Sessions wait on the watch and are sent later.
+
+The timer
 - Keeps running after you leave the app. When a session ends, the watch buzzes and asks you to open Pomodorino again.
 - A daily pomodoro goal, a streak of days you reached it, and a chart of the last 7 days.
 - Five watch-face styles to choose from: Ember, Drain, Mono, Liquid and Classic.
 - Optional auto-start of the next session.
 - START is button-only. Taps on the screen are ignored, so a stray touch can't pause your timer.
 
-Controls: START starts, pauses and resumes. UP opens the menu (skip break, restart, stop, statistics, settings, credits). DOWN shows the statistics.
+Controls: START starts, pauses and resumes. UP opens the menu (tasks, skip break, restart, statistics, settings, Connect Todoist). DOWN shows the statistics.
+
+Privacy: tasks go through Pomodorino's server, which keeps only what Todoist can't store (minutes spent per task). Details: https://pomodorino.erattini.workers.dev/privacy
+Pomodorino is not created by, affiliated with, or supported by Doist.
+
+Keep cooking!
 
 Credits
 Made by emileroutin. Source code (PolyForm Noncommercial 1.0.0, free for noncommercial use): https://github.com/emirattini/pomodorino
 Icon and store image: tomato photo by Luc Viatour / https://Lucnix.be (Wikimedia Commons), licensed CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/). Changes: background removed, cropped and resized. The icon is shared under the same licence.
 Fonts (SIL Open Font License 1.1, https://openfontlicense.org): Bebas Neue © 2010 Dharma Type; JetBrains Mono © 2020 The JetBrains Mono Project Authors; Outfit © 2021 The Outfit Project Authors; Playfair Display © 2017 The Playfair Display Project Authors; Noto Sans © 2022 The Noto Project Authors.
 
-## What's new (version 1.0.0)
+## What's new (version 1.1.0)
 
-First release.
+- 45 watches: Forerunner 70 to 970, fēnix 7, 8, 9 and E, epix, Enduro 3 and 4, Instinct 3 AMOLED, MARQ.
+- Connect Todoist from your phone: today's tasks on the watch, time spent added to each task.
+- A task left open overnight: each day's time goes to Todoist on its own, and the next morning the app asks
+  whether you're still working on it.
+
+Version 1.0.0: first release (Forerunner 165).
 
 ## Files
 
