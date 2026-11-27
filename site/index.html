@@ -9,6 +9,8 @@
 <meta property="og:description" content="Pick one of today's tasks, focus, and the time goes back to Todoist. Free, for 45 Garmin watches.">
 <meta property="og:image" content="img/social.jpg">
 <link rel="icon" href="img/favicon.png">
+<script>/* hide the hero until js/effects.js brings it in (only when motion is welcome) */
+if(!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("motion")</script>
 <style>
 /* VOICE  warm and plain, like a friend showing you the app on their wrist
    IDEA   the watch itself: you hold it, press its buttons, it buzzes
@@ -40,7 +42,9 @@ p{margin:0 0 1em}
 code{font:15px/1.4 ui-monospace,monospace;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}
 
 /* hero: always night, like the watch */
-.hero{background:radial-gradient(60% 70% at 72% 55%,#7a2412 0,rgba(122,36,18,0) 70%),#140c0b;color:#f6eee9;color-scheme:dark}
+.hero{position:relative;isolation:isolate;overflow:hidden;background:#140c0b;color:#f6eee9;color-scheme:dark}
+.hero::before{content:"";position:absolute;inset:-10%;z-index:-1;background:radial-gradient(55% 60% at 72% 62%,#8a2a14 0,rgba(122,36,18,0) 70%);animation:breathe 7s ease-in-out infinite alternate}
+@keyframes breathe{from{opacity:.75;transform:scale(1)}to{opacity:1;transform:scale(1.08)}}
 .hero a{color:#ffb000}
 nav{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;max-width:1120px;margin:0 auto 40px}
 nav .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:21px;color:#fff;text-decoration:none;margin-right:auto}
@@ -51,15 +55,23 @@ nav .links a:hover{color:#ffb000}
 .lede{font-size:19px;color:#dccdc6;max-width:640px}
 .cta{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 8px}
 .btn{display:inline-flex;align-items:center;min-height:46px;padding:0 22px;border-radius:23px;font-weight:600;text-decoration:none;font-size:17px}
-.btn.main{background:#ff5544;color:#fff!important}
+.btn.main{position:relative;overflow:hidden;background:#ff5544;color:#fff!important}
+.btn.main::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.4) 50%,transparent 70%);transform:translateX(-120%);transition:transform .7s}
+.btn.main:hover::after{transform:translateX(120%)}
 .btn.ghost{border:2px solid #5a3c35;color:#f6eee9!important}
 .demo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:clamp(28px,5vw,64px);align-items:center;margin-top:44px}
 
-/* the watch */
+/* the watch: .stage gives depth, .tilt leans toward the pointer (js/effects.js) */
+.stage{perspective:1100px}
+.tilt{transform-style:preserve-3d}
+.motion [data-enter],.motion #tilt{opacity:0;animation:failsafe 0s 3s forwards}
+@keyframes failsafe{to{opacity:1}}
 .watch{--d:min(360px,calc(100vw - 72px));position:relative;width:var(--d);height:var(--d);margin:0 auto;border-radius:50%;
   background:radial-gradient(circle at 35% 25%,#4a4646,#1d1b1b 55%,#0c0b0b);box-shadow:0 30px 60px rgba(0,0,0,.55),inset 0 0 0 2px #5d5858,inset 0 0 0 7px #121111;outline:none}
 .watch:focus-visible{box-shadow:0 0 0 4px #ffb000,0 30px 60px rgba(0,0,0,.55)}
 .watch canvas{position:absolute;inset:12.5%;width:75%;height:75%;border-radius:50%;background:#000;box-shadow:0 0 0 3px #050505}
+.watch .glare{position:absolute;inset:12.5%;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at var(--glare-x,30%) var(--glare-y,20%),rgba(255,255,255,.14),rgba(255,255,255,0) 50%)}
 .watch svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .watch svg text{fill:#bdb6b3;font:700 3.3px Outfit,sans-serif;letter-spacing:.35px}
 .watch svg .red{fill:#ff6b57}
@@ -67,11 +79,14 @@ nav .links a:hover{color:#ffb000}
 .key::before{content:"";position:absolute;left:50%;top:50%;width:13px;height:30px;margin:-15px 0 0 -6.5px;border-radius:5px;
   background:linear-gradient(90deg,#2b2929,#6b6767 45%,#2b2929);transform:rotate(var(--r));box-shadow:0 2px 4px rgba(0,0,0,.6)}
 .key[data-key=start]::before{background:linear-gradient(90deg,#7a1c12,#ff5544 45%,#7a1c12)}
-.key:active::before{filter:brightness(1.5)}
+.key:active::before,.key.pressed::before{translate:var(--push) 0;filter:brightness(1.5)}
+.key::before{transition:translate .08s}
 .key:focus-visible{outline:3px solid #ffb000;border-radius:50%}
 .watch.buzz{animation:buzz .45s 2}
+.watch.buzz::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:3px solid #ff5544;pointer-events:none;animation:pulse .9s ease-out 2}
+@keyframes pulse{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(1.2)}}
 @keyframes buzz{0%,100%{transform:none}20%{transform:translateX(-4px) rotate(-1deg)}40%{transform:translateX(4px) rotate(1deg)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
-@media (prefers-reduced-motion:reduce){.watch.buzz{animation:none;box-shadow:0 0 0 4px #ff5544}html{scroll-behavior:auto}}
+@media (prefers-reduced-motion:reduce){.watch.buzz,.watch.buzz::after,.hero::before{animation:none}.watch.buzz{box-shadow:0 0 0 4px #ff5544}html{scroll-behavior:auto}.shots figure:hover img{transform:none}}
 .toast{min-height:3.2em;margin:18px auto 0;max-width:380px;text-align:center;color:#ffcf70;font-size:16px;opacity:0;transition:opacity .3s}
 .toast.on{opacity:1}
 
@@ -90,7 +105,8 @@ nav .links a:hover{color:#ffb000}
 /* screenshots */
 .shots{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 2px 18px;margin:28px 0 8px}
 .shots figure{flex:none;width:200px;margin:0;scroll-snap-align:start}
-.shots img{display:block;width:200px;height:200px;border-radius:50%;background:#000;box-shadow:0 0 0 8px #262222,0 0 0 9px #444,0 12px 24px rgba(0,0,0,.25)}
+.shots img{transition:transform .4s cubic-bezier(.22,1,.36,1);display:block;width:200px;height:200px;border-radius:50%;background:#000;box-shadow:0 0 0 8px #262222,0 0 0 9px #444,0 12px 24px rgba(0,0,0,.25)}
+.shots figure:hover img{transform:scale(1.07) rotate(-4deg)}
 .shots figcaption{margin-top:18px;font-size:15px;color:var(--soft);line-height:1.4}
 .points{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:6px 40px;padding:0;list-style:none;margin:18px 0 0}
 .points li{padding:12px 0;border-top:1px solid var(--line)}
@@ -130,17 +146,19 @@ footer img{width:56px;height:56px;float:left;margin-right:14px}
     <span class="links"><a href="#demo">Demo</a> <a href="#features">Features</a> <a href="#guide">Guide</a> <a href="#faq">FAQ</a> <a href="https://github.com/emirattini/pomodorino">GitHub</a></span>
   </nav>
   <div class="wrap">
-    <h1>A pomodoro timer for your Garmin, with your Todoist tasks</h1>
-    <p class="lede">Pick one of today's tasks on the watch, focus for 25 minutes, and the time you spent goes back to Todoist. Free, for 45 Garmin watches.</p>
-    <div class="cta">
+    <h1 data-enter>A pomodoro timer for your Garmin, with your Todoist tasks</h1>
+    <p class="lede" data-enter>Pick one of today's tasks on the watch, focus for 25 minutes, and the time you spent goes back to Todoist. Free, for 45 Garmin watches.</p>
+    <div class="cta" data-enter>
       <a class="btn main" href="https://apps.garmin.com/">Get it on Connect IQ</a>
       <a class="btn ghost" href="#guide">Read the guide</a>
     </div>
 
     <div class="demo" id="demo">
       <div>
+        <div class="stage" id="stage"><div class="tilt" id="tilt">
         <div class="watch" id="watch" tabindex="0" aria-label="Pomodorino demo watch. Use the arrow keys, Enter and Escape, or the buttons around it.">
           <canvas id="screen" role="img" aria-label="The watch screen"></canvas>
+          <div class="glare"></div>
           <svg viewBox="0 0 100 100" aria-hidden="true">
             <defs>
               <path id="arcTop" d="M 19.6 80.4 A 43 43 0 1 1 80.4 80.4"/>
@@ -152,16 +170,17 @@ footer img{width:56px;height:56px;float:left;margin-right:14px}
             <text><textPath href="#arcBot" startOffset="16.7%" text-anchor="middle">DOWN</textPath></text>
             <text><textPath href="#arcBot" startOffset="83.3%" text-anchor="middle">BACK</textPath></text>
           </svg>
-          <button class="key" data-key="light" style="left:5.8%;top:24.5%;--r:30deg" aria-label="LIGHT"></button>
-          <button class="key" data-key="up" style="left:-1%;top:50%;--r:0deg" aria-label="UP"></button>
-          <button class="key" data-key="down" style="left:5.8%;top:75.5%;--r:-30deg" aria-label="DOWN"></button>
-          <button class="key" data-key="start" style="left:94.2%;top:24.5%;--r:-30deg" aria-label="START"></button>
-          <button class="key" data-key="back" style="left:94.2%;top:75.5%;--r:30deg" aria-label="BACK"></button>
+          <button class="key" data-key="light" style="left:5.8%;top:24.5%;--r:30deg;--push:4px" aria-label="LIGHT"></button>
+          <button class="key" data-key="up" style="left:-1%;top:50%;--r:0deg;--push:4px" aria-label="UP"></button>
+          <button class="key" data-key="down" style="left:5.8%;top:75.5%;--r:-30deg;--push:4px" aria-label="DOWN"></button>
+          <button class="key" data-key="start" style="left:94.2%;top:24.5%;--r:-30deg;--push:-4px" aria-label="START"></button>
+          <button class="key" data-key="back" style="left:94.2%;top:75.5%;--r:30deg;--push:-4px" aria-label="BACK"></button>
         </div>
+        </div></div>
         <p class="toast" id="toast" role="status" aria-live="polite"></p>
       </div>
 
-      <div class="panel">
+      <div class="panel" data-enter>
         <h2>Try it</h2>
         <p class="hint" id="hint" aria-live="polite"></p>
         <ul class="keys">
@@ -184,14 +203,14 @@ footer img{width:56px;height:56px;float:left;margin-right:14px}
   <div class="wrap">
     <h2>Your tasks, on the watch</h2>
     <p class="narrow" style="margin:0">Todoist is optional and a free account is enough. Connect once from your phone; after that the app opens on today's tasks.</p>
-    <div class="shots" tabindex="0" aria-label="Screenshots of the Todoist features">
+    <div class="shots" data-reveal-each tabindex="0" aria-label="Screenshots of the Todoist features">
       <figure><img src="img/screen_7_tasks.png" alt="Task list: Write the Q4 report, Work, 45 of 50 minutes" loading="lazy"><figcaption>Today's tasks, with the time spent and the estimate</figcaption></figure>
       <figure><img src="img/screen_8_task_timer.png" alt="Timer at 24:53 with the task title under it" loading="lazy"><figcaption>The timer runs on the task you picked</figcaption></figure>
       <figure><img src="img/screen_9_finish.png" alt="Estimated 50 minutes, actual 1 hour 10" loading="lazy"><figcaption>At the end: estimated vs actual, then complete it or keep it for later</figcaption></figure>
       <figure><img src="img/screen_10_still_working.png" alt="Still working on: Study Rust" loading="lazy"><figcaption>Left a task open overnight? The next morning it asks</figcaption></figure>
       <figure><img src="img/screen_11_connect.png" alt="Check your phone, with a pairing code" loading="lazy"><figcaption>Connecting: log in to Todoist on your phone, no typing on the watch</figcaption></figure>
     </div>
-    <ul class="points">
+    <ul class="points" data-reveal-each>
       <li><b>Time goes back to Todoist</b>Each day's focus on a task is added to it as a comment, like “🍅 3 · 75 min”.</li>
       <li><b>Estimates, your way</b>Write <code>~1h30</code> in the task title, or use Todoist's duration field.</li>
       <li><b>Works without your phone</b>Sessions wait on the watch and are sent the next time it can reach the phone.</li>
@@ -203,7 +222,7 @@ footer img{width:56px;height:56px;float:left;margin-right:14px}
 <section class="band alt">
   <div class="wrap">
     <h2>A timer that stays out of your way</h2>
-    <div class="shots" tabindex="0" aria-label="The five styles and the statistics screen">
+    <div class="shots" data-reveal-each tabindex="0" aria-label="The five styles and the statistics screen">
       <figure><img src="img/screen_1_ember.png" alt="Ember style" loading="lazy"><figcaption><b>Ember</b>: a glowing arc and a ring for the daily goal</figcaption></figure>
       <figure><img src="img/screen_2_drain.png" alt="Drain style" loading="lazy"><figcaption><b>Drain</b>: a thick ring that drains away</figcaption></figure>
       <figure><img src="img/screen_3_mono.png" alt="Mono style" loading="lazy"><figcaption><b>Mono</b>: a terminal look, in a monospace font</figcaption></figure>
@@ -211,7 +230,7 @@ footer img{width:56px;height:56px;float:left;margin-right:14px}
       <figure><img src="img/screen_5_classic.png" alt="Classic style" loading="lazy"><figcaption><b>Classic</b>: a ring of tomatoes and a serif face</figcaption></figure>
       <figure><img src="img/screen_6_stats.png" alt="Last 7 days bar chart, streak 3 days" loading="lazy"><figcaption>The last 7 days, your goal and your streak</figcaption></figure>
     </div>
-    <ul class="points">
+    <ul class="points" data-reveal-each>
       <li><b>Runs in the background</b>Leave the app: when a session ends, the watch buzzes and asks you to open Pomodorino again.</li>
       <li><b>A goal for the day</b>Set how many pomodoros you want, and keep a streak of days you reached it.</li>
       <li><b>Your own rhythm</b>Focus, short and long breaks, and the long-break interval can all be changed on the watch.</li>
@@ -321,10 +340,11 @@ footer img{width:56px;height:56px;float:left;margin-right:14px}
   <div class="narrow">
     <p class="coffee">Enjoying it? <a href="https://buymeacoffee.com/emileroutin">Buy me a coffee ☕</a></p>
     <p><img src="img/tomato.png" alt="">Made by emileroutin. <a href="https://github.com/emirattini/pomodorino">Source code</a> under the PolyForm Noncommercial 1.0.0 license, free for noncommercial use. <a href="https://pomodorino.erattini.workers.dev/privacy">Privacy</a>.</p>
-    <p class="small">Pomodorino is not created by, affiliated with, or supported by Doist or Garmin. Tomato photo by Luc Viatour / <a href="https://Lucnix.be">Lucnix.be</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, background removed and resized. Fonts: Outfit, Bebas Neue and Noto Sans (<a href="https://openfontlicense.org">SIL Open Font License 1.1</a>).</p>
+    <p class="small">Pomodorino is not created by, affiliated with, or supported by Doist or Garmin. Tomato photo by Luc Viatour / <a href="https://Lucnix.be">Lucnix.be</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, background removed and resized. Animations: <a href="https://motion.dev">Motion</a> (MIT). Fonts: Outfit, Bebas Neue and Noto Sans (<a href="https://openfontlicense.org">SIL Open Font License 1.1</a>).</p>
   </div>
 </footer>
 
-<script src="demo.js"></script>
+<script src="vendor/motion-14.13.0.min.js" defer></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
