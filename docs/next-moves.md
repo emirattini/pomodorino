@@ -48,11 +48,10 @@ midnight UTC. The uptime check already notices that. What's missing is seeing *w
 
 ## 2. Unit tests on the watch
 
-**Started:** `./build.sh test` runs 28 tests in the simulator (`tests/`): the session engine (`PomoEngine`),
-the statistics and streak (`Stats`), the offline queue and cached list (`TaskSync`). Next: add a test with
-every bug fix, and cover the controller's decisions (`PomoController`: what a finished session records, the
-task summary) by pulling them into functions that don't draw. Running them in CI would need the SDK there
-(see below).
+**Started:** `./build.sh test` runs 43 tests in the simulator (`tests/`): the session engine (`PomoEngine`),
+the controller (`PomoController`: buttons, settings, what a task session sends, a task across days, with a
+clock the test sets), the statistics and streak (`Stats`), the offline queue and cached list (`TaskSync`).
+Next: add a test with every bug fix. Running them in CI would need the SDK there (see below).
 
 **The watch app in CI: later, optional.** CI could check that the app compiles and attach the `.iq` to a
 GitHub release. That needs the Connect IQ SDK in CI (its download sits behind a license prompt; community

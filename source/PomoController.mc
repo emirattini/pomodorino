@@ -97,8 +97,14 @@ class PomoController {
 
     // ---- queries ----
 
+    // The clock, in one place each so the unit tests can set it (tests/ControllerTest.mc).
     function nowSec() as Number {
         return Time.now().value();
+    }
+
+    // Midnight starting today, local time (epoch s).
+    function today() as Number {
+        return Time.today().value();
     }
 
     function phase() as Number {
@@ -238,7 +244,7 @@ class PomoController {
         task = {
             "id" => t["id"], "title" => t["title"], "est" => t["estimateMin"], "spent" => t["spentMin"],
             "sid" => TaskSync.newId(), "start" => 0, "foc" => 0, "pom" => 0, "int" => false,
-            "day" => Time.today().value()
+            "day" => today()
         };
         saveTask();
     }
@@ -285,18 +291,18 @@ class PomoController {
     // own session (one Todoist comment per day), the task stays selected with today's time starting at
     // zero, and MainView asks whether it's still the task to work on. A pomodoro still going counts for
     // today, when it ends.
-    private function newDay() as Void {
+    function newDay() as Void {
         var t = task;
         if (t == null) {
             return;
         }
-        var today = Time.today().value();
+        var midnight = today();
         if (!(t["day"] instanceof Number)) {
-            t["day"] = today; // a task selected before this version: start counting days now
+            t["day"] = midnight; // a task selected before this version: start counting days now
             saveTask();
             return;
         }
-        if ((t["day"] as Number) >= today) {
+        if ((t["day"] as Number) >= midnight) {
             return;
         }
         // Only time already added up: a pomodoro paused overnight counts for today when it ends.
@@ -313,7 +319,7 @@ class PomoController {
         t["foc"] = 0;
         t["pom"] = 0;
         t["int"] = false;
-        t["day"] = today;
+        t["day"] = midnight;
         saveTask();
         askContinue = true;
         TaskSync.flush();

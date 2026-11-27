@@ -50,7 +50,8 @@ server instead (optional): [server/README.md](server/README.md).
    `tools/sim.sh run fenix7`, `tools/sim.sh shot out.png` (see the script for keys and taps).
 5. Unit tests: `./build.sh test` (or `./build.sh test fenix7`) builds the tests in `tests/` and runs them in that
    simulator, about 10 seconds. They cover the timer (phases, auto-start, catching up after the app was
-   closed), the statistics and streak, and the offline queue. Test builds have no personal server key, so
+   closed), the buttons' actions, what a task session sends (also across days), the statistics and streak,
+   and the offline queue. Test builds have no personal server key, so
    they never reach a real server. Test-only code is added by `tests.jungle` and never ships in the app.
 
 Each screen size has its own bitmap fonts: `resources/fonts/` for 390 px, `devices/round-<W>x<W>/` for the
