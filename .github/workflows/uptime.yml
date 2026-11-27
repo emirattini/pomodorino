@@ -1,0 +1,29 @@
+# Is the server up? Twice a day, opens two of its addresses. If either answers wrong, the run fails
+# and GitHub emails the repo owner (Settings → Notifications → Actions: failed workflows only).
+#
+# - the home page: the Worker runs and serves pages;
+# - /v1/ping without a key: the API answers with its own JSON "unauthorized" (401), not a Cloudflare
+#   error page (for example 1027, over the free plan's daily requests).
+# No key is used: this never touches anyone's data.
+
+name: Uptime
+
+on:
+  schedule:
+    - cron: "17 7,19 * * *" # 07:17 and 19:17 UTC
+  workflow_dispatch:        # "Run workflow" button: check now
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Home page
+        run: curl -fsS --max-time 20 --retry 2 https://pomodorino.erattini.workers.dev/ | grep -q Pomodorino
+
+      - name: API
+        run: |
+          body=$(curl -sS --max-time 20 --retry 2 -w '\n%{http_code}' https://pomodorino.erattini.workers.dev/v1/ping)
+          echo "$body"
+          [ "$(echo "$body" | tail -n1)" = 401 ] && echo "$body" | grep -q '"error":"unauthorized"'
