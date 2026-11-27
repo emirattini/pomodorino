@@ -549,7 +549,7 @@ SHOTS = [
     ("ember", ember, Frame(frac=0.62, tick=0)),
     ("drain", drain, Frame(frac=0.40)),
     ("mono", mono, Frame(frac=0.58, tick=0)),
-    ("liquid", liquid, Frame(phase=SHORT_BREAK, frac=0.45, minutes=5, cycle=2, tick=1, clock="14:52")),
+    ("liquid", liquid, Frame(frac=0.45, tick=1)),
     ("classic", classic, Frame(frac=0.62, tick=1)),
     ("stats", stats, Frame(days=WEEK)),
 ]

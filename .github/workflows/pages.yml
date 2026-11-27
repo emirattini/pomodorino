@@ -1,0 +1,36 @@
+# The website (site/): published to GitHub Pages on every push to main that touches it.
+#
+# Plain files, no build step: the folder is uploaded as it is. One-time setup on GitHub:
+# Settings → Pages → Build and deployment → Source: GitHub Actions.
+
+name: Site
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", ".github/workflows/pages.yml"]
+  workflow_dispatch: # "Run workflow" button: republish without a change
+
+permissions:
+  contents: read
+  pages: write    # publish to Pages
+  id-token: write # prove to Pages that the upload comes from this workflow
+
+concurrency:
+  group: pages
+  cancel-in-progress: false # let a publish that started finish
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

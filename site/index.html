@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pomodorino for Garmin</title>
+<meta name="description" content="A free pomodoro timer for Garmin watches, with your Todoist tasks. Try it in the browser.">
+<meta property="og:title" content="Pomodorino: a pomodoro timer for Garmin, with your Todoist tasks">
+<meta property="og:description" content="Pick one of today's tasks, focus, and the time goes back to Todoist. Free, for 45 Garmin watches.">
+<meta property="og:image" content="img/social.jpg">
+<link rel="icon" href="img/favicon.png">
+<style>
+/* VOICE  warm and plain, like a friend showing you the app on their wrist
+   IDEA   the watch itself: you hold it, press its buttons, it buzzes
+   PICTURE a working Forerunner-style watch running the real screens, on a dark kitchen-warm glow
+   COLOUR and TYPE  the app's own: black face, tomato #FF5544, goal amber #FFB000; Outfit for words
+   LAYOUT hero = title, then watch + how to drive it; then features, guide, FAQ in one calm column */
+@font-face{font-family:Outfit;src:url(fonts/outfit.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:NotoW;src:url(fonts/noto-sans.woff2) format("woff2")}
+@font-face{font-family:EmberT;src:url(fonts/noto-cond-light.woff2) format("woff2")}
+@font-face{font-family:ArcW;src:url(fonts/noto-cond-bold.woff2) format("woff2")}
+@font-face{font-family:Bebas;src:url(fonts/bebas.woff2) format("woff2")}
+:root{color-scheme:light dark;
+  --bg:light-dark(#fff,#110b0a);--ink:light-dark(#1d1412,#f4ece8);--soft:light-dark(#6b5b56,#b8a7a1);
+  --line:light-dark(#eadfdb,#2c211f);--card:light-dark(#fbf5f3,#1a1210);
+  --tomato:light-dark(#d23b26,#ff6b57);--amber:light-dark(#9a5f00,#ffb000)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html{scroll-padding-top:24px;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 Outfit,system-ui,sans-serif;overflow-x:clip}
+a{color:var(--tomato)}
+.band{padding:clamp(36px,5vw,72px) max(5vw,16px)}
+.wrap{max-width:1120px;margin:0 auto}
+.narrow{max-width:760px;margin:0 auto}
+h1,h2,h3{line-height:1.08;text-wrap:balance;margin:0 0 .5em}
+h1{font-size:clamp(34px,5vw,52px);font-weight:700}
+h2{font-size:clamp(28px,3.6vw,40px);font-weight:700}
+h3{font-size:21px;font-weight:600;margin-top:1.8em}
+p{margin:0 0 1em}
+code{font:15px/1.4 ui-monospace,monospace;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}
+
+/* hero: always night, like the watch */
+.hero{background:radial-gradient(60% 70% at 72% 55%,#7a2412 0,rgba(122,36,18,0) 70%),#140c0b;color:#f6eee9;color-scheme:dark}
+.hero a{color:#ffb000}
+nav{display:flex;flex-wrap:wrap;align-items:center;gap:6px 20px;max-width:1120px;margin:0 auto 40px}
+nav .brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:21px;color:#fff;text-decoration:none;margin-right:auto}
+nav .brand img{width:38px;height:38px}
+nav .links{display:flex;flex-wrap:wrap;gap:4px 20px}
+nav .links a,nav .brand{color:#f0e4de}nav .links a{text-decoration:none;font-size:16px;padding:8px 0}
+nav .links a:hover{color:#ffb000}
+.lede{font-size:19px;color:#dccdc6;max-width:640px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0 8px}
+.btn{display:inline-flex;align-items:center;min-height:46px;padding:0 22px;border-radius:23px;font-weight:600;text-decoration:none;font-size:17px}
+.btn.main{background:#ff5544;color:#fff!important}
+.btn.ghost{border:2px solid #5a3c35;color:#f6eee9!important}
+.demo{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:clamp(28px,5vw,64px);align-items:center;margin-top:44px}
+
+/* the watch */
+.watch{--d:min(360px,calc(100vw - 72px));position:relative;width:var(--d);height:var(--d);margin:0 auto;border-radius:50%;
+  background:radial-gradient(circle at 35% 25%,#4a4646,#1d1b1b 55%,#0c0b0b);box-shadow:0 30px 60px rgba(0,0,0,.55),inset 0 0 0 2px #5d5858,inset 0 0 0 7px #121111;outline:none}
+.watch:focus-visible{box-shadow:0 0 0 4px #ffb000,0 30px 60px rgba(0,0,0,.55)}
+.watch canvas{position:absolute;inset:12.5%;width:75%;height:75%;border-radius:50%;background:#000;box-shadow:0 0 0 3px #050505}
+.watch svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.watch svg text{fill:#bdb6b3;font:700 3.3px Outfit,sans-serif;letter-spacing:.35px}
+.watch svg .red{fill:#ff6b57}
+.key{position:absolute;width:48px;height:48px;margin:-24px 0 0 -24px;border:0;padding:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.key::before{content:"";position:absolute;left:50%;top:50%;width:13px;height:30px;margin:-15px 0 0 -6.5px;border-radius:5px;
+  background:linear-gradient(90deg,#2b2929,#6b6767 45%,#2b2929);transform:rotate(var(--r));box-shadow:0 2px 4px rgba(0,0,0,.6)}
+.key[data-key=start]::before{background:linear-gradient(90deg,#7a1c12,#ff5544 45%,#7a1c12)}
+.key:active::before{filter:brightness(1.5)}
+.key:focus-visible{outline:3px solid #ffb000;border-radius:50%}
+.watch.buzz{animation:buzz .45s 2}
+@keyframes buzz{0%,100%{transform:none}20%{transform:translateX(-4px) rotate(-1deg)}40%{transform:translateX(4px) rotate(1deg)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+@media (prefers-reduced-motion:reduce){.watch.buzz{animation:none;box-shadow:0 0 0 4px #ff5544}html{scroll-behavior:auto}}
+.toast{min-height:3.2em;margin:18px auto 0;max-width:380px;text-align:center;color:#ffcf70;font-size:16px;opacity:0;transition:opacity .3s}
+.toast.on{opacity:1}
+
+.panel h2{font-size:26px;margin-bottom:.3em}
+.hint{font-size:18px;color:#fff;min-height:3.2em;margin-bottom:14px}
+.keys{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px}
+.keys li{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;align-items:baseline;color:#dccdc6;font-size:16px}
+.keys b{font-size:14px;letter-spacing:.06em;color:#fff;background:#2a1d1a;border-radius:6px;padding:3px 0;text-align:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:6px 0 10px;font-size:15px;color:#b8a7a1}
+.chips span{display:flex;gap:6px;align-items:center}
+.chips button{min-height:40px;padding:0 14px;border-radius:20px;border:1.5px solid #5a3c35;background:none;color:#f6eee9;font:500 15px Outfit,sans-serif;cursor:pointer}
+.chips button[aria-pressed=true]{background:#ffb000;border-color:#ffb000;color:#1d1412}
+.chips button:focus-visible{outline:3px solid #ffb000;outline-offset:2px}
+.small{font-size:14px;color:#a8958e}
+
+/* screenshots */
+.shots{display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding:8px 2px 18px;margin:28px 0 8px}
+.shots figure{flex:none;width:200px;margin:0;scroll-snap-align:start}
+.shots img{display:block;width:200px;height:200px;border-radius:50%;background:#000;box-shadow:0 0 0 8px #262222,0 0 0 9px #444,0 12px 24px rgba(0,0,0,.25)}
+.shots figcaption{margin-top:18px;font-size:15px;color:var(--soft);line-height:1.4}
+.points{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:6px 40px;padding:0;list-style:none;margin:18px 0 0}
+.points li{padding:12px 0;border-top:1px solid var(--line)}
+.points b{display:block;font-weight:600}
+.alt{background:var(--card)}
+
+/* guide */
+table{width:100%;border-collapse:collapse;margin:12px 0 8px;font-size:16px}
+th,td{text-align:left;padding:10px 12px 10px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--soft);font-size:14px}
+td:first-child{font-weight:600;white-space:nowrap}
+dl{margin:8px 0}dt{font-weight:600;margin-top:12px}dd{margin:0;color:var(--soft)}
+ol{padding-left:1.3em}ol li{margin-bottom:8px}
+.toc{display:flex;flex-wrap:wrap;gap:6px 18px;margin:0 0 8px;font-size:16px}
+details{border-top:1px solid var(--line);padding:4px 0}
+details:last-of-type{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;font-weight:600;padding:12px 0;min-height:44px}
+details p,details ul{color:var(--soft)}
+
+footer{background:#140c0b;color:#cbbab3;font-size:15px;color-scheme:dark}
+footer a{color:#ffb000}
+footer .coffee{font-size:20px;color:#fff;margin-bottom:22px}
+footer img{width:56px;height:56px;float:left;margin-right:14px}
+
+@media(max-width:860px){.demo{grid-template-columns:minmax(0,1fr)}.panel{max-width:520px;margin:0 auto}}
+@media(max-width:600px){nav{margin-bottom:26px}nav .links{width:100%;display:flex;gap:18px;overflow-x:auto}
+  .stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:7.5em;white-space:normal}
+  .stack td::before{content:attr(data-l);float:inline-start;width:7em;margin-inline-start:-7.5em;color:var(--soft);font-weight:400;font-size:14px}
+  .shots figure,.shots img{width:160px}.shots img{height:160px}}
+</style>
+</head>
+<body>
+
+<header class="band hero" id="top">
+  <nav>
+    <a class="brand" href="#top"><img src="img/tomato.png" alt="">Pomodorino</a>
+    <span class="links"><a href="#demo">Demo</a> <a href="#features">Features</a> <a href="#guide">Guide</a> <a href="#faq">FAQ</a> <a href="https://github.com/emirattini/pomodorino">GitHub</a></span>
+  </nav>
+  <div class="wrap">
+    <h1>A pomodoro timer for your Garmin, with your Todoist tasks</h1>
+    <p class="lede">Pick one of today's tasks on the watch, focus for 25 minutes, and the time you spent goes back to Todoist. Free, for 45 Garmin watches.</p>
+    <div class="cta">
+      <a class="btn main" href="https://apps.garmin.com/">Get it on Connect IQ</a>
+      <a class="btn ghost" href="#guide">Read the guide</a>
+    </div>
+
+    <div class="demo" id="demo">
+      <div>
+        <div class="watch" id="watch" tabindex="0" aria-label="Pomodorino demo watch. Use the arrow keys, Enter and Escape, or the buttons around it.">
+          <canvas id="screen" role="img" aria-label="The watch screen"></canvas>
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <defs>
+              <path id="arcTop" d="M 19.6 80.4 A 43 43 0 1 1 80.4 80.4"/>
+              <path id="arcBot" d="M 4.5 50 A 45.5 45.5 0 0 0 95.5 50"/>
+            </defs>
+            <text><textPath href="#arcTop" startOffset="16.7%" text-anchor="middle">UP</textPath></text>
+            <text><textPath href="#arcTop" startOffset="27.8%" text-anchor="middle">LIGHT</textPath></text>
+            <text><textPath href="#arcTop" startOffset="72.2%" text-anchor="middle" class="red">START</textPath></text>
+            <text><textPath href="#arcBot" startOffset="16.7%" text-anchor="middle">DOWN</textPath></text>
+            <text><textPath href="#arcBot" startOffset="83.3%" text-anchor="middle">BACK</textPath></text>
+          </svg>
+          <button class="key" data-key="light" style="left:5.8%;top:24.5%;--r:30deg" aria-label="LIGHT"></button>
+          <button class="key" data-key="up" style="left:-1%;top:50%;--r:0deg" aria-label="UP"></button>
+          <button class="key" data-key="down" style="left:5.8%;top:75.5%;--r:-30deg" aria-label="DOWN"></button>
+          <button class="key" data-key="start" style="left:94.2%;top:24.5%;--r:-30deg" aria-label="START"></button>
+          <button class="key" data-key="back" style="left:94.2%;top:75.5%;--r:30deg" aria-label="BACK"></button>
+        </div>
+        <p class="toast" id="toast" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="panel">
+        <h2>Try it</h2>
+        <p class="hint" id="hint" aria-live="polite"></p>
+        <ul class="keys">
+          <li><b>START</b><span>Start, pause and resume. In lists, select.</span></li>
+          <li><b>UP</b><span>Open the menu. In lists, move up.</span></li>
+          <li><b>DOWN</b><span>Statistics. In lists, move down.</span></li>
+          <li><b>BACK</b><span>Go back.</span></li>
+        </ul>
+        <div class="chips">
+          <span>Style <button data-style="0">Ember</button><button data-style="1">Drain</button></span>
+          <span>Speed <button data-speed="60">60×</button><button data-speed="1">Real time</button></span>
+        </div>
+        <p class="small">Press the buttons on the watch, or use the arrow keys, Enter and Esc. The tasks are made up and nothing is sent anywhere. At 60× a pomodoro takes 25 seconds.</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="band" id="features">
+  <div class="wrap">
+    <h2>Your tasks, on the watch</h2>
+    <p class="narrow" style="margin:0">Todoist is optional and a free account is enough. Connect once from your phone; after that the app opens on today's tasks.</p>
+    <div class="shots" tabindex="0" aria-label="Screenshots of the Todoist features">
+      <figure><img src="img/screen_7_tasks.png" alt="Task list: Write the Q4 report, Work, 45 of 50 minutes" loading="lazy"><figcaption>Today's tasks, with the time spent and the estimate</figcaption></figure>
+      <figure><img src="img/screen_8_task_timer.png" alt="Timer at 24:53 with the task title under it" loading="lazy"><figcaption>The timer runs on the task you picked</figcaption></figure>
+      <figure><img src="img/screen_9_finish.png" alt="Estimated 50 minutes, actual 1 hour 10" loading="lazy"><figcaption>At the end: estimated vs actual, then complete it or keep it for later</figcaption></figure>
+      <figure><img src="img/screen_10_still_working.png" alt="Still working on: Study Rust" loading="lazy"><figcaption>Left a task open overnight? The next morning it asks</figcaption></figure>
+      <figure><img src="img/screen_11_connect.png" alt="Check your phone, with a pairing code" loading="lazy"><figcaption>Connecting: log in to Todoist on your phone, no typing on the watch</figcaption></figure>
+    </div>
+    <ul class="points">
+      <li><b>Time goes back to Todoist</b>Each day's focus on a task is added to it as a comment, like “🍅 3 · 75 min”.</li>
+      <li><b>Estimates, your way</b>Write <code>~1h30</code> in the task title, or use Todoist's duration field.</li>
+      <li><b>Works without your phone</b>Sessions wait on the watch and are sent the next time it can reach the phone.</li>
+      <li><b>Complete from the wrist</b>Finish a task on the watch and it's checked off in Todoist.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="band alt">
+  <div class="wrap">
+    <h2>A timer that stays out of your way</h2>
+    <div class="shots" tabindex="0" aria-label="The five styles and the statistics screen">
+      <figure><img src="img/screen_1_ember.png" alt="Ember style" loading="lazy"><figcaption><b>Ember</b>: a glowing arc and a ring for the daily goal</figcaption></figure>
+      <figure><img src="img/screen_2_drain.png" alt="Drain style" loading="lazy"><figcaption><b>Drain</b>: a thick ring that drains away</figcaption></figure>
+      <figure><img src="img/screen_3_mono.png" alt="Mono style" loading="lazy"><figcaption><b>Mono</b>: a terminal look, in a monospace font</figcaption></figure>
+      <figure><img src="img/screen_4_liquid.png" alt="Liquid style" loading="lazy"><figcaption><b>Liquid</b>: a level of liquid that moves with the time</figcaption></figure>
+      <figure><img src="img/screen_5_classic.png" alt="Classic style" loading="lazy"><figcaption><b>Classic</b>: a ring of tomatoes and a serif face</figcaption></figure>
+      <figure><img src="img/screen_6_stats.png" alt="Last 7 days bar chart, streak 3 days" loading="lazy"><figcaption>The last 7 days, your goal and your streak</figcaption></figure>
+    </div>
+    <ul class="points">
+      <li><b>Runs in the background</b>Leave the app: when a session ends, the watch buzzes and asks you to open Pomodorino again.</li>
+      <li><b>A goal for the day</b>Set how many pomodoros you want, and keep a streak of days you reached it.</li>
+      <li><b>Your own rhythm</b>Focus, short and long breaks, and the long-break interval can all be changed on the watch.</li>
+      <li><b>No accidental taps</b>START is button-only: a stray touch on the screen can't pause your timer.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="band" id="guide">
+  <div class="narrow">
+    <h2>Guide</h2>
+    <div class="toc"><a href="#g-buttons">Buttons</a><a href="#g-menu">Menu</a><a href="#g-settings">Settings</a><a href="#g-connect">Connect Todoist</a><a href="#g-tasks">Working on tasks</a><a href="#g-estimates">Estimates</a></div>
+
+    <h3 id="g-buttons">Buttons</h3>
+    <table class="stack">
+      <thead><tr><th>Button</th><th>On the timer</th><th>In lists and menus</th></tr></thead>
+      <tbody>
+        <tr><td>START</td><td>Start, pause, resume</td><td>Select</td></tr>
+        <tr><td>UP</td><td>Open the menu</td><td>Move up</td></tr>
+        <tr><td>DOWN</td><td>Statistics</td><td>Move down</td></tr>
+        <tr><td>BACK</td><td>Leave the app; the timer keeps running</td><td>Go back</td></tr>
+      </tbody>
+    </table>
+    <p>On touchscreen watches, taps on the timer screen are ignored on purpose.</p>
+
+    <h3 id="g-menu">Menu</h3>
+    <dl>
+      <dt>Choose task / Finish task</dt><dd>Pick one of today's tasks, or end the one you're on (you'll see estimated vs actual time).</dd>
+      <dt>Skip break</dt><dd>During a break: start focusing now.</dd>
+      <dt>Restart session</dt><dd>Reset the current timer. Focus time already spent on a task still counts.</dd>
+      <dt>Stop</dt><dd>End the set and go back to the start (without a task).</dd>
+      <dt>Statistics</dt><dd>The last 7 days, your daily goal and your streak.</dd>
+      <dt>Settings</dt><dd>Style, times, daily goal and auto-start.</dd>
+      <dt>Connect Todoist / Disconnect Todoist</dt><dd>Link or unlink your Todoist account.</dd>
+    </dl>
+
+    <h3 id="g-settings">Settings</h3>
+    <table class="stack">
+      <thead><tr><th>Setting</th><th>Default</th><th>Can be</th></tr></thead>
+      <tbody>
+        <tr><td>Style</td><td>Ember</td><td>Ember, Drain, Mono, Liquid, Classic</td></tr>
+        <tr><td>Focus</td><td>25 min</td><td>5 to 90 min</td></tr>
+        <tr><td>Short break</td><td>5 min</td><td>1 to 30 min</td></tr>
+        <tr><td>Long break</td><td>15 min</td><td>5 to 60 min</td></tr>
+        <tr><td>Long break every</td><td>4 pomodoros</td><td>2 to 8</td></tr>
+        <tr><td>Daily goal</td><td>8 pomodoros</td><td>1 to 30</td></tr>
+        <tr><td>Auto-start</td><td>Off</td><td>On: the next session starts by itself (except after a long break)</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="g-connect">Connect Todoist</h3>
+    <ol>
+      <li>On the watch, press UP and choose <b>Connect Todoist</b>. The watch shows a short code.</li>
+      <li>Your phone gets a notification from Garmin Connect. Open it.</li>
+      <li>Check the code on the page is the one on your watch, then tap <b>Connect with Todoist</b> and log in.</li>
+      <li>The watch says <b>Connected</b> and loads today's tasks.</li>
+    </ol>
+    <p>You need the Garmin Connect app on your phone, paired with the watch. The code works for 15 minutes; if it runs out, press START on the watch to get a new one.</p>
+
+    <h3 id="g-tasks">Working on tasks</h3>
+    <p>The list shows what Todoist has for today, overdue tasks included. Under each task: its project, the time already spent and the estimate (<code>Work · 45' / 50'</code>).</p>
+    <p>Pick a task and start the timer: its title replaces the status line while you focus. When you're done, choose <b>Finish task</b> in the menu. You'll see the estimate against the actual time, then:</p>
+    <ul>
+      <li><b>Complete task</b> checks it off in Todoist.</li>
+      <li><b>Continue later</b> keeps it open, with the time added.</li>
+    </ul>
+    <p>Either way the session is added to the task as a comment: <code>🍅 3 · 75 min</code> (pomodoros and minutes), with “(interrupted)” if you stopped partway through a pomodoro.</p>
+    <p><b>Left it open overnight?</b> Each day's time goes to Todoist as its own comment. The next morning the app asks “Still working on…?”, and you can carry on or finish it.</p>
+    <p><b>No phone nearby?</b> Sessions wait on the watch and are sent when it can reach the phone again. The list shows how many are still waiting.</p>
+
+    <h3 id="g-estimates">Estimates</h3>
+    <p>If you use Todoist's <b>duration</b> field (in minutes), that's the estimate. Otherwise write a word starting with <code>~</code> in the task's title or description:</p>
+    <table>
+      <thead><tr><th>You write</th><th>Estimate</th></tr></thead>
+      <tbody>
+        <tr><td><code>~50</code> or <code>~50m</code></td><td>50 minutes</td></tr>
+        <tr><td><code>~1h</code></td><td>1 hour</td></tr>
+        <tr><td><code>~1h30</code> or <code>~1h30m</code></td><td>1 hour 30</td></tr>
+      </tbody>
+    </table>
+    <p>The tag is hidden on the watch: “Report ~1h30” shows as “Report”.</p>
+  </div>
+</section>
+
+<section class="band alt" id="faq">
+  <div class="narrow">
+    <h2>Questions</h2>
+    <details><summary>Is it free?</summary><p>Yes, and it stays free. There are no ads and no paid features. If it helps you, you can <a href="https://buymeacoffee.com/emileroutin">buy me a coffee</a>.</p></details>
+    <details><summary>Which watches does it run on?</summary>
+      <p>45 round Garmin watches with five buttons:</p>
+      <ul>
+        <li>Forerunner 70, 165, 165 Music, 170, 170 Music, 255, 255 Music, 265, 265S, 570, 955, 965, 970</li>
+        <li>fēnix 7, 7 Pro, 8, 9 and E; quatix, tactix and Enduro 2</li>
+        <li>epix Gen 2 and Pro Gen 2, D2 Mach 1 Pro</li>
+        <li>Enduro 3 and 4, Instinct 3 AMOLED, MARQ Gen 2 and Gen 3</li>
+      </ul>
+    </details>
+    <details><summary>Do I need Todoist?</summary><p>No. Without it, Pomodorino is a plain pomodoro timer with goals, streaks and statistics. With it, you work on your tasks. A free Todoist account is enough.</p></details>
+    <details><summary>What happens to my data?</summary><p>Pomodorino's server talks to Todoist for the watch. It stores only your Todoist account id and access token, a fingerprint of your watch's key, and the minutes spent on each task: no name, email or location. <b>Disconnect Todoist</b> in the menu deletes all of it. Details on the <a href="https://pomodorino.erattini.workers.dev/privacy">privacy page</a>.</p></details>
+    <details><summary>Does the timer keep going if I leave the app?</summary><p>Yes. When a session ends, the watch buzzes and asks you to open Pomodorino again.</p></details>
+    <details><summary>Does it work with other task apps?</summary><p>Not yet: only Todoist for now.</p></details>
+    <details><summary>Something doesn't work</summary><p>Open an issue on <a href="https://github.com/emirattini/pomodorino/issues">GitHub</a>, with your watch model.</p></details>
+  </div>
+</section>
+
+<footer class="band">
+  <div class="narrow">
+    <p class="coffee">Enjoying it? <a href="https://buymeacoffee.com/emileroutin">Buy me a coffee ☕</a></p>
+    <p><img src="img/tomato.png" alt="">Made by emileroutin. <a href="https://github.com/emirattini/pomodorino">Source code</a> under the PolyForm Noncommercial 1.0.0 license, free for noncommercial use. <a href="https://pomodorino.erattini.workers.dev/privacy">Privacy</a>.</p>
+    <p class="small">Pomodorino is not created by, affiliated with, or supported by Doist or Garmin. Tomato photo by Luc Viatour / <a href="https://Lucnix.be">Lucnix.be</a>, <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>, background removed and resized. Fonts: Outfit, Bebas Neue and Noto Sans (<a href="https://openfontlicense.org">SIL Open Font License 1.1</a>).</p>
+  </div>
+</footer>
+
+<script src="demo.js"></script>
+</body>
+</html>
