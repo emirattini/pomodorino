@@ -14,6 +14,16 @@ TODOIST_FILTER = "today"
 # (redirect URL: https://<this worker>/oauth/callback). The client secret is a secret, see below.
 TODOIST_CLIENT_ID = "bc881eb22d114f76a371e9ffbe90fcec"
 
+# Workers Logs (dashboard: Workers → pomodorino → Logs): only the server's own error lines
+# (`console_error!` on a 5xx, see error.rs), kept a few days. The per-request logs stay off: they would
+# record every URL (pairing and login codes) and the visitor's location, which the privacy page rules out.
+# Request counts and error rates show in the dashboard's metrics either way.
+[observability]
+enabled = true
+
+[observability.logs]
+invocation_logs = false
+
 # Users, watches and minutes spent (migrations/). Create it with `npx wrangler d1 create pomodorino`,
 # paste the id here, then `npx wrangler d1 migrations apply pomodorino --remote` (or --local for dev).
 [[d1_databases]]
