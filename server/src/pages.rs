@@ -7,6 +7,8 @@ use worker::{Headers, Request, Response, RouteContext};
 use crate::error::ApiError;
 
 const REPO: &str = "https://github.com/emirattini/pomodorino";
+/// The app's website (GitHub Pages, `site/` in the repo): features, a guide to the app, the FAQ.
+const SITE: &str = "https://emirattini.github.io/pomodorino/";
 const COFFEE: &str = "https://buymeacoffee.com/emileroutin";
 
 /// The app's launcher tomato at 192 px (photo: Luc Viatour, CC BY-SA 3.0), built into the worker.
@@ -75,7 +77,7 @@ pub fn page(title: &str, body: &str) -> worker::Result<Response> {
   small, small a {{ color: #777; }}
 </style></head>
 <body><main><img class="logo" src="/icon.png" alt=""><h1>{title}</h1>{body}
-<p><small><a href="/privacy">Privacy</a> · <a href="{REPO}">Pomodorino on GitHub</a></small></p>
+<p><small><a href="/privacy">Privacy</a> · <a href="{SITE}">Website</a> · <a href="{REPO}">GitHub</a></small></p>
 </main></body></html>"#
     ))
 }
@@ -108,7 +110,8 @@ pub fn home() -> worker::Result<Response> {
         &format!(
             "<p>The server behind the Pomodorino app for Garmin watches. To connect your tasks, choose \
              <b>Connect Todoist</b> in the app's menu on your watch.</p>\
-             <p><a href=\"{REPO}\">Source code and instructions</a></p>\
+             <p><a href=\"{SITE}\">How it works: features, guide and FAQ</a></p>\
+             <p><a href=\"{REPO}\">Source code</a></p>\
              <p>Enjoying it? <a href=\"{COFFEE}\">Buy me a coffee ☕</a></p>\
              <p><small>Tomato photo: <a href=\"https://commons.wikimedia.org/wiki/File:Tomates_cerises_Luc_Viatour.jpg\">\
              Luc Viatour</a>, CC BY-SA 3.0</small></p>"

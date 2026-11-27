@@ -374,6 +374,27 @@ private items included, so pure logic (truncation, validation, status codes, Tod
 tested without a Workers runtime. Anything that touches the database or `fetch` was checked end to end with
 `wrangler dev` and curl.
 
+## 18. Building HTML with `format!` (`pages.rs`)
+
+```rust
+const SITE: &str = "https://emirattini.github.io/pomodorino/";
+
+format!(r#"<a href="{SITE}">Website</a>  body {{ margin: 0; }}"#)
+```
+
+- **`const`**: a value fixed at compile time, with its type always written out (`&str` here: text built into
+  the program, which lives as long as the program, hence no owner and no allocation). Constants are
+  `SCREAMING_CASE` and can be used anywhere in the module, also inside other functions.
+- **Names inside the braces**: `{SITE}` takes the variable or constant of that name in scope (since Rust
+  1.58), the same as `format!("{}", SITE)`. Only plain names work: `{self.title}` or `{a + b}` don't, those
+  still go after the string.
+- **`{{` and `}}`** are a literal brace, which the CSS needs (`body {{ ... }}`).
+- **`r#"..."#`** is a raw string: no `\"` escapes, so HTML attributes keep their plain quotes. Compare
+  `home()`, which uses a normal string and has to write `href=\"{SITE}\"`. A `\` at the end of a line in a
+  normal string skips the newline and the next line's leading spaces, so long text can be wrapped in the
+  source.
+- `format!` checks all of this at compile time: a typo like `{SIET}` is a compile error, not a broken link.
+
 ---
 
 ### Exercises, if you want to practise
