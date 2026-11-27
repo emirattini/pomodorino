@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Regenerates every bitmap font from the TTFs: one set per screen size.
 #   resources/fonts/                     390 px (Forerunner 165): the reference sizes below
-#   resources-round-<W>x<W>/fonts/       the same fonts scaled to a W-pixel round screen
-# Connect IQ picks the folder that matches the device's screen (resource qualifiers).
+#   devices/round-<W>x<W>/fonts/         the same fonts scaled to a W-pixel round screen
+# Connect IQ picks the folder that matches the device's screen (resource qualifiers, listed in monkey.jungle
+# by tools/launcher_icons.py: run it after adding a screen size).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 MK="python3 -I tools/make_font.py"
@@ -44,6 +45,6 @@ fonts() {
 
 fonts resources/fonts $REF
 for W in $SIZES; do
-    fonts "resources-round-${W}x${W}/fonts" "$W"
-    cp resources/fonts/fonts.xml "resources-round-${W}x${W}/fonts/fonts.xml"
+    fonts "devices/round-${W}x${W}/fonts" "$W"
+    cp resources/fonts/fonts.xml "devices/round-${W}x${W}/fonts/fonts.xml"
 done

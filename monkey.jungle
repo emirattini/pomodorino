@@ -1,2 +1,15 @@
 project.manifest = manifest.xml
 base.sourcePath = source;gen
+
+# Resources per screen size and per watch, under devices/ (written by tools/launcher_icons.py)
+round-240x240.resourcePath = $(round-240x240.resourcePath);devices/round-240x240
+round-260x260.resourcePath = $(round-260x260.resourcePath);devices/round-260x260
+round-280x280.resourcePath = $(round-280x280.resourcePath);devices/round-280x280
+round-360x360.resourcePath = $(round-360x360.resourcePath);devices/round-360x360
+round-416x416.resourcePath = $(round-416x416.resourcePath);devices/round-416x416
+round-454x454.resourcePath = $(round-454x454.resourcePath);devices/round-454x454
+epix2pro42mm.resourcePath = $(epix2pro42mm.resourcePath);devices/epix2pro42mm
+epix2pro51mm.resourcePath = $(epix2pro51mm.resourcePath);devices/epix2pro51mm
+instinct3amoled45mm.resourcePath = $(instinct3amoled45mm.resourcePath);devices/instinct3amoled45mm
+marq2.resourcePath = $(marq2.resourcePath);devices/marq2
+marq2aviator.resourcePath = $(marq2aviator.resourcePath);devices/marq2aviator
