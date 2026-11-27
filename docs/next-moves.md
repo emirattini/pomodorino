@@ -23,7 +23,7 @@ use them as they are. Every other platform needs its own watch app.
 | # | Move | Why now | Size |
 |---|---|---|---|
 | 1 | Monitoring on Cloudflare | strangers will depend on the server as soon as the store approves the app | an hour |
-| 2 | Unit tests on the watch | 45 watches and a timer that runs in the background: the logic must not regress | an evening, then as you go |
+| 2 | Unit tests on the watch (started) | 45 watches and a timer that runs in the background: the logic must not regress | as you go |
 | 3 | After approval: watch reviews and issues | the first users tell you what to do next | ongoing |
 | 4 | Italian translation | one strings file | an evening |
 | 5 | A second task app (TickTick or Microsoft To Do) | the server is built for it (`TaskProvider`); widens who can use it | a few days each |
@@ -48,9 +48,11 @@ midnight UTC. The uptime check already notices that. What's missing is seeing *w
 
 ## 2. Unit tests on the watch
 
-Connect IQ runs `(:test)` functions in the simulator (`monkeyc --unit-test`, then `monkeydo ... -t`).
-Start with the logic that doesn't draw anything: the session engine (`PomoEngine`), the statistics and streak
-(`Stats`), the offline queue (`TaskSync`). Running them in CI would need the SDK there (see below).
+**Started:** `./build.sh test` runs 28 tests in the simulator (`tests/`): the session engine (`PomoEngine`),
+the statistics and streak (`Stats`), the offline queue and cached list (`TaskSync`). Next: add a test with
+every bug fix, and cover the controller's decisions (`PomoController`: what a finished session records, the
+task summary) by pulling them into functions that don't draw. Running them in CI would need the SDK there
+(see below).
 
 **The watch app in CI: later, optional.** CI could check that the app compiles and attach the `.iq` to a
 GitHub release. That needs the Connect IQ SDK in CI (its download sits behind a license prompt; community

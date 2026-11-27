@@ -1,0 +1,2 @@
+# Unit tests (tests/): only for test builds, `./build.sh test`, which passes this file after monkey.jungle.
+base.sourcePath = $(base.sourcePath);tests

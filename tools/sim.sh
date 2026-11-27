@@ -6,6 +6,8 @@
 #   tools/sim.sh image              build the image once (about 1 GB)
 #   tools/sim.sh start              start the simulator (container "ciqsim")
 #   tools/sim.sh run DEVICE         load bin/Pomodorino.prg (build it first: ./build.sh build DEVICE)
+#   tools/sim.sh test DEVICE        run the unit tests in bin/PomodorinoTest.prg (starts the simulator if needed;
+#                                   build them with ./build.sh test, which also calls this)
 #   tools/sim.sh shot OUT.png       screenshot of the simulator window
 #   tools/sim.sh open DEVICE        from the glance into the app
 #   tools/sim.sh key KEY            press a key: Return = START, Escape = BACK, Up / Down = UP / DOWN
@@ -29,6 +31,13 @@ case "${1:-}" in
   run)
     docker exec "$NAME" bash -c "$SDK; (\"\$SDK/monkeydo\" /work/bin/Pomodorino.prg ${2:?device} >/tmp/monkeydo.log 2>&1 &)"
     sleep 12 ;;
+  test)
+    docker inspect -f '{{.State.Running}}' "$NAME" 2>/dev/null | grep -q true || "$0" start
+    # monkeydo prints each test's result and a summary, but exits with 1 even when all pass: judge by the
+    # summary ("PASSED (passed=N, failed=0, errors=0)", else "FAILED ...").
+    out=$(docker exec "$NAME" bash -c "$SDK; timeout 120 \"\$SDK/monkeydo\" /work/bin/PomodorinoTest.prg ${2:?device} -t" 2>&1 || true)
+    echo "$out"
+    grep -q "^PASSED" <<<"$out" ;;
   shot)
     # The simulator window sits at the top left of the hidden screen; its size depends on the watch. While
     # the app opens a web page (Connect Todoist), a "Webpage Window" covers it:
@@ -53,5 +62,5 @@ print(l['x'] + l['width'] // 2, l['y'] + l['height'] * 22 // 100 + 25)")
   stop)
     docker rm -f "$NAME" >/dev/null ;;
   *)
-    sed -n '2,14p' "$0"; exit 1 ;;
+    sed -n '2,16p' "$0"; exit 1 ;;
 esac

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Usage: ./build.sh [build|sim|release] [device]   (default: build fr165)
+# Usage: ./build.sh [build|sim|test|release] [device]   (default: build fr165)
+#   test: builds the unit tests (tests/) and runs them in the simulator (tools/sim.sh, in Docker)
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -36,7 +37,7 @@ MC
 
 mkdir -p bin
 case "$CMD" in
-    release) write_personal no ;;
+    release|test) write_personal no ;;  # tests never get a real server key
     *) write_personal yes ;;
 esac
 case "$CMD" in
@@ -47,6 +48,9 @@ case "$CMD" in
         monkeyc -d "$DEVICE" -f monkey.jungle -o bin/Pomodorino.prg -y developer_key.der -w
         pgrep -f simulator >/dev/null || { connectiq & sleep 4; }
         monkeydo bin/Pomodorino.prg "$DEVICE" ;;
+    test)
+        monkeyc -d "$DEVICE" -f "monkey.jungle;tests.jungle" -o bin/PomodorinoTest.prg -y developer_key.der -w --unit-test
+        tools/sim.sh test "$DEVICE" ;;
     release)
         monkeyc -e -f monkey.jungle -o bin/Pomodorino.iq -y developer_key.der -r
         echo "Built bin/Pomodorino.iq" ;;
